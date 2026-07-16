@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Triton Poker Pro - 传奇AI训练平台 V15 (深蓝引擎版)</title>
+    <title>Triton Poker Pro - 传奇AI训练平台 V16 (存档+复盘版)</title>
     <style>
-        /* 传奇扑克直播桌 暗黑奢华风格 */
         :root { 
             --table-bg: radial-gradient(circle at center, #1b2838 0%, #0d131a 100%);
             --table-border: #0a0e14;
@@ -14,13 +13,17 @@
         }
         body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #05070a; color: var(--text-main); margin: 0; overflow: hidden; display: flex; flex-direction: column; height: 100vh; user-select: none;}
 
-        /* HUD 数据面板 */
-        #hud-btn { position: absolute; top: 20px; left: 20px; background: rgba(13, 19, 26, 0.8); border: 1px solid var(--gold); color: var(--gold); padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; z-index: 500; transition: 0.2s;}
+        /* 顶部系统菜单栏 */
+        #hud-btn { position: absolute; top: 15px; left: 15px; background: rgba(13, 19, 26, 0.8); border: 1px solid var(--gold); color: var(--gold); padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; z-index: 500; transition: 0.2s;}
         #hud-btn:hover { background: var(--gold); color: #000; }
+        
+        #menu-btn { position: absolute; top: 15px; right: 15px; background: rgba(231, 76, 60, 0.2); border: 1px solid var(--alert); color: var(--alert); padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; z-index: 500; transition: 0.2s;}
+        #menu-btn:hover { background: var(--alert); color: #fff; }
+
         .modal { position: absolute; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(8px);}
         .modal-content { background: #131b24; border: 2px solid var(--gold); padding: 30px; border-radius: 12px; text-align: center; max-width: 350px; width: 85%; box-shadow: 0 0 40px var(--gold-glow);}
         
-        /* 初始大厅配置 */
+        /* 大厅配置 */
         #setup-screen { position: absolute; inset: 0; background: url('https://images.unsplash.com/photo-1541278107931-e006523892df?q=80&w=2000&auto=format&fit=crop') center/cover; z-index: 800; display: flex; align-items: center; justify-content: center; }
         #setup-screen::after { content: ''; position: absolute; inset: 0; background: rgba(5, 7, 10, 0.9); }
         .setup-box { position: relative; z-index: 801; background: rgba(19, 27, 36, 0.95); padding: 30px; border-radius: 16px; border: 1px solid #334; width: 90%; max-width: 400px; backdrop-filter: blur(10px);}
@@ -29,26 +32,34 @@
         .form-row label { display: block; margin-bottom: 5px; color: #8b9eb3; font-size: 14px; font-weight: bold;}
         .form-row input, .form-row select { width: 100%; box-sizing: border-box; padding: 10px; background: #0a0e14; border: 1px solid #2a3b4c; color: #fff; border-radius: 6px; font-size: 16px; outline: none;}
         .form-row input:focus { border-color: var(--gold); }
-        .start-btn { width: 100%; padding: 15px; background: var(--gold); color: #000; font-size: 18px; font-weight: 900; border: none; border-radius: 8px; cursor: pointer; margin-top: 10px; transition: 0.2s;}
+        .start-btn { width: 100%; padding: 15px; background: var(--gold); color: #000; font-size: 18px; font-weight: 900; border: none; border-radius: 8px; cursor: pointer; margin-top: 10px; transition: 0.2s; box-shadow: 0 4px 15px rgba(212,175,55,0.3);}
         .start-btn:active { transform: scale(0.98); }
 
-        /* 传奇牌桌系统 */
+        /* 牌桌系统 */
         #game-screen { display: none; flex: 1; position: relative; }
-        #table { position: absolute; top: 42%; left: 50%; transform: translate(-50%, -50%); width: 85vw; height: 48vh; max-width: 900px; max-height: 500px; background: var(--table-bg); border-radius: 200px / 100px; border: 12px solid var(--table-border); box-shadow: inset 0 0 60px rgba(0,0,0,0.8), 0 20px 50px rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; flex-direction: column; padding-bottom: 2vh;}
+        #table { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); width: 85vw; height: 48vh; max-width: 900px; max-height: 500px; background: var(--table-bg); border-radius: 200px / 100px; border: 12px solid var(--table-border); box-shadow: inset 0 0 60px rgba(0,0,0,0.8), 0 20px 50px rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; flex-direction: column; padding-bottom: 2vh;}
         
         #board-area { text-align: center; z-index: 15;}
-        #main-pot { color: var(--gold); font-size: 22px; font-weight: 900; background: rgba(0,0,0,0.6); padding: 5px 20px; border-radius: 20px; margin-bottom: 15px; border: 1px solid rgba(212, 175, 55, 0.3); text-shadow: 0 2px 4px #000;}
+        #main-pot { color: var(--gold); font-size: 22px; font-weight: 900; background: rgba(0,0,0,0.6); padding: 5px 20px; border-radius: 20px; margin-bottom: 15px; border: 1px solid rgba(212, 175, 55, 0.3); text-shadow: 0 2px 4px #000; transition: all 0.2s;}
         #board-cards { display: flex; gap: 8px; justify-content: center; min-height: 80px;}
 
-        /* --- 座位与玩家状态 --- */
+        /* --- 座位系统与 Z-index 层级控制 --- */
         .seat { position: absolute; display: flex; flex-direction: column; align-items: center; width: 110px; transition: all 0.3s;}
         
         .seat.in-hand .player-panel { border: 2px solid var(--call); box-shadow: 0 0 10px rgba(52, 152, 219, 0.4); }
         .seat.acting .player-panel { border: 2px solid var(--gold); box-shadow: 0 0 25px var(--gold); transform: scale(1.05); }
-        .seat.acting { z-index: 25; }
-        .seat.folded { opacity: 0.35; filter: grayscale(100%) brightness(0.7); z-index: 1; }
+        .seat.acting { z-index: 50; }
+        .seat.folded { opacity: 0.35; filter: grayscale(100%) brightness(0.7); z-index: 1; pointer-events: none;}
         .seat.folded-revealed { opacity: 0.85; filter: brightness(0.85); z-index: 10; }
         
+        /* 核心修复02：人类主角置顶光环 */
+        #seat-0.hero-acting { z-index: 200 !important; }
+        #seat-0.hero-acting .hole-cards .card { transform: scale(0.85) translateY(-10px); box-shadow: 0 10px 25px rgba(212, 175, 55, 0.6); }
+
+        /* 核心修复02：结算Show牌时全局底牌置顶 */
+        #table.showdown-mode .seat:not(.folded) { z-index: 150 !important; }
+        #table.showdown-mode .seat:not(.folded) .hole-cards .card { transform: scale(0.85) translateY(-15px); box-shadow: 0 10px 30px rgba(0,0,0,0.9); }
+
         #seat-0 { bottom: -5%; left: 50%; transform: translateX(-50%); z-index: 30;} 
         #seat-1 { bottom: 5%; left: -5%; }
         #seat-2 { top: 15%; left: -5%; }
@@ -64,7 +75,7 @@
         .action-tag { 
             background: #2c3e50; color: #fff; font-size: 14px; padding: 6px 14px; border-radius: 8px; font-weight: 900; 
             position: absolute; top: -25px; left: 50%; transform: translateX(-50%) translateY(10px) scale(0.8); 
-            opacity: 0; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 30; white-space: nowrap; 
+            opacity: 0; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 80; white-space: nowrap; 
             box-shadow: 0 5px 15px rgba(0,0,0,0.6); border: 2px solid #fff; pointer-events: none;
         }
         .action-tag.show { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
@@ -75,8 +86,8 @@
 
         .bet-chip { background: radial-gradient(circle, #f1c40f 30%, #d35400 100%); color: #fff; font-weight: 900; font-size: 13px; padding: 4px 12px; border-radius: 12px; border: 2px dashed #fff; margin-top: 5px; opacity: 0; transition: 0.3s;}
 
-        .hole-cards { display: flex; gap: -15px; margin-bottom: -15px; z-index: 4; justify-content: center;}
-        .hole-cards .card { transform: scale(0.65); transform-origin: top center; margin: 0 -10px;}
+        .hole-cards { display: flex; gap: -15px; margin-bottom: -15px; z-index: 4; justify-content: center; transition: all 0.3s;}
+        .hole-cards .card { transform: scale(0.65); transform-origin: top center; margin: 0 -10px; transition: all 0.3s;}
 
         .card { width: 60px; height: 86px; background: #fff; border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); position: relative; display: flex; flex-direction: column; justify-content: space-between; padding: 4px; box-sizing: border-box;}
         .card.back { background: radial-gradient(var(--card-back) 20%, transparent 20%), radial-gradient(var(--card-back) 20%, transparent 20%), #962d22; background-size: 8px 8px; background-position: 0 0, 4px 4px; border: 2px solid #fff; }
@@ -84,7 +95,7 @@
         .card-suit { font-size: 14px; line-height: 1; }
         .card-center { font-size: 30px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.2; }
 
-        /* --- 人类操作台 --- */
+        /* --- 操作台与下一局确认按钮 --- */
         #action-console { position: absolute; bottom: 0; left: 0; right: 0; background: #0a0e14; padding: 15px; border-top: 1px solid #334; display: none; flex-direction: column; gap: 10px; z-index: 100;}
         .console-row { display: flex; gap: 10px; justify-content: space-between; }
         .action-btn { flex: 1; padding: 12px 0; border: none; border-radius: 8px; font-size: 16px; font-weight: 900; color: white; cursor: pointer; transition: 0.1s;}
@@ -101,7 +112,10 @@
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; background: var(--gold); border-radius: 50%; cursor: pointer;}
         #raise-amount { color: var(--gold); font-weight: 900; font-size: 18px; min-width: 60px; text-align: right;}
 
-        /* --- 结算大字报 --- */
+        /* 核心修复01：手动确认下一局按钮 */
+        #next-hand-container { position: absolute; bottom: 20%; left: 50%; transform: translateX(-50%); z-index: 400; display: none; width: 100%; text-align: center;}
+
+        /* 结算大字报 */
         #result-overlay { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; z-index: 200; opacity: 0; transition: opacity 0.4s; }
         #result-overlay.show { opacity: 1; }
         .res-amt { font-size: 55px; font-weight: 900; text-shadow: 0 4px 20px rgba(0,0,0,0.9); white-space: nowrap;}
@@ -114,8 +128,10 @@
 
     <!-- 主游戏界面 -->
     <div id="game-screen">
+        <!-- 核心菜单 -->
         <button id="hud-btn" onclick="showHUD()">📊 生涯战绩</button>
-        <div id="broadcast-bar"></div>
+        <button id="menu-btn" onclick="saveAndQuit()">💾 保存并退出</button>
+        
         <div id="result-overlay"></div>
 
         <div id="table">
@@ -168,12 +184,17 @@
                 <button class="action-btn btn-raise" id="btn-raise" onclick="handleHumanAction('raise')">加注</button>
             </div>
         </div>
+
+        <!-- 手动下一局确认 -->
+        <div id="next-hand-container">
+            <button class="start-btn" style="width:auto; padding: 12px 40px; background:#e67e22; border:2px solid #fff; box-shadow: 0 5px 25px rgba(230,126,34,0.6);" onclick="startNewHand()">👉 确认并开启下一局</button>
+        </div>
     </div>
 
-    <!-- 模态框组 -->
+    <!-- 各类模态框 -->
     <div class="modal" id="hud-modal">
         <div class="modal-content">
-            <h2 style="color:var(--gold); margin-top:0;">📊 数据统计与复盘</h2>
+            <h2 style="color:var(--gold); margin-top:0;">📊 导师复盘与统计</h2>
             <div id="hud-data" style="text-align:left; line-height: 2; margin-bottom: 20px;"></div>
             <button class="start-btn" onclick="closeHUD()">关闭面板</button>
         </div>
@@ -211,7 +232,9 @@
                     <option value="5" selected>5 人 (满员 6人桌)</option>
                 </select>
             </div>
+            <!-- 核心修复03：本地存档恢复按钮 -->
             <button class="start-btn" onclick="initGame()">进入牌桌</button>
+            <button id="btn-load-save" class="start-btn" style="background:#3498db; display:none;" onclick="loadGameFromSave()">🔄 恢复上一次的对局存档</button>
         </div>
     </div>
 
@@ -241,6 +264,37 @@
     let curHandPlayed = false, curHandRaised = false;
     let sessionBuyin = 0;
 
+    // --- 存档管理引擎 ---
+    window.onload = function() {
+        if(localStorage.getItem('TritonSaveV16')) {
+            document.getElementById('btn-load-save').style.display = 'block';
+        }
+    };
+
+    function saveGameState() {
+        let saveData = { cfg, players, tracker, sessionBuyin, pot, street, dealerIdx, board };
+        localStorage.setItem('TritonSaveV16', JSON.stringify(saveData));
+        document.getElementById('btn-load-save').style.display = 'block';
+    }
+
+    function loadGameFromSave() {
+        let saved = localStorage.getItem('TritonSaveV16');
+        if (saved) {
+            let data = JSON.parse(saved);
+            cfg = data.cfg; players = data.players; tracker = data.tracker; 
+            sessionBuyin = data.sessionBuyin; dealerIdx = data.dealerIdx;
+            
+            document.getElementById('setup-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'flex';
+            startNewHand(); // 恢复后直接开启下一局清算新状态
+        }
+    }
+
+    function saveAndQuit() {
+        saveGameState();
+        returnToLobby();
+    }
+
     // --- 语音引擎 ---
     function speakText(text) {
         window.speechSynthesis.cancel();
@@ -256,7 +310,9 @@
     }
 
     function updateUI() {
-        document.getElementById('main-pot').innerText = `POT: $${pot}`;
+        // 核心修复06：实时显示包含当前下注的动态 Live Pot
+        let livePot = pot + players.reduce((sum, p) => sum + (p.bet || 0), 0);
+        document.getElementById('main-pot').innerText = `POT: $${livePot}`;
         
         let boardHtml = "";
         for(let i=0; i<5; i++) { boardHtml += (i < board.length) ? renderCard(board[i]) : `<div class="card back" style="visibility:hidden;"></div>`; }
@@ -278,20 +334,27 @@
             if (p.folded && isHandActive) {
                 seat.classList.add('folded');
             } else if (p.folded && !isHandActive) {
-                seat.classList.add('folded-revealed'); // 极客功能：对局结束后透明度恢复，强制观看弃牌底牌
+                seat.classList.add('folded-revealed'); 
             } else {
                 seat.classList.add('in-hand');
                 if (toActIdx === idx && isHandActive && !isAnimating) seat.classList.add('acting'); 
             }
 
             let cardsHtml = "";
-            // 极客功能：对局结束后 (!isHandActive) 所有人强制掀开底牌
             if (p.cards.length === 2 && (!p.folded || !isHandActive)) {
                 let show = (idx === 0) || (!isHandActive);
                 cardsHtml = renderCard(p.cards[0], !show) + renderCard(p.cards[1], !show);
             }
             document.getElementById(`cards-${idx}`).innerHTML = cardsHtml;
         });
+
+        // 核心修复02：如果轮到主角，添加超高Z-index光环
+        let seat0 = document.getElementById('seat-0');
+        if (toActIdx === 0 && isHandActive && !isAnimating && !players[0].folded) {
+            seat0.classList.add('hero-acting');
+        } else {
+            seat0.classList.remove('hero-acting');
+        }
 
         let consoleDom = document.getElementById('action-console');
         if (isHandActive && !isAnimating && toActIdx === 0 && !players[0].folded && !players[0].allIn) {
@@ -305,8 +368,6 @@
             else { btnCall.innerText = `跟注 $${callCost}`; btnCall.style.background = "#3498db"; }
 
             let minTarget = highestBet + minRaiseInc;
-            
-            // 彻底修复 $NaN：给所有的p.bet和p.stack加入 fallback
             let maxValidBet = Math.max(...players.map(p => (p.id !== 0 && p.activeInGame && !p.folded) ? (p.bet || 0) + (p.stack || 0) : 0));
             let maxTarget = Math.min((me.bet || 0) + (me.stack || 0), maxValidBet);
             
@@ -395,7 +456,6 @@
         else if (cfg.numOpponents === 4) seatMap = [1, 2, 4, 5];
         else seatMap = [1, 2, 3, 4, 5];
 
-        // 终极修复：空座彻底初始化，阻绝 NaN 源头
         for (let i = 1; i <= 5; i++) {
             if (seatMap.includes(i)) {
                 let prof = AI_PROFILES[Math.floor(Math.random() * AI_PROFILES.length)];
@@ -420,15 +480,21 @@
     function getActingPlayerCount() { return players.filter(p => p.activeInGame && !p.folded && !p.allIn).length; }
 
     function startNewHand() {
+        // 恢复UI状态
+        document.getElementById('table').classList.remove('showdown-mode');
+        document.getElementById('next-hand-container').style.display = 'none';
+
         if (players[0].stack <= 0) {
             document.getElementById('go-title').innerText = "💀 筹码耗尽";
             document.getElementById('game-over-modal').style.display = 'flex';
+            localStorage.removeItem('TritonSaveV16'); // 破产清除存档
             return;
         }
         let aiAlive = players.filter(p => p.activeInGame && p.isAI && p.stack > 0).length;
         if (aiAlive === 0) {
             document.getElementById('go-title').innerText = "🏆 霸桌成功！";
             document.getElementById('game-over-modal').style.display = 'flex';
+            localStorage.removeItem('TritonSaveV16');
             return;
         }
 
@@ -442,8 +508,6 @@
 
         deck = [];
         SUITS.forEach(s => RANKS.forEach(r => deck.push({ v: r.v, l: r.l, s: s.s, c: s.c })));
-        
-        // 使用 CSPRNG 级别的 Fisher-Yates 真正随机洗牌
         if (window.crypto && window.crypto.getRandomValues) {
             const rVals = new Uint32Array(deck.length); window.crypto.getRandomValues(rVals);
             for (let i = deck.length - 1; i > 0; i--) { const j = Math.floor((rVals[i] / 4294967296) * (i + 1)); [deck[i], deck[j]] = [deck[j], deck[i]]; }
@@ -481,7 +545,6 @@
         else { p.bet = amt; p.invested += amt; p.stack -= amt; }
     }
 
-    // --- 人类交互与校验 ---
     function updatePendingBet(val) {
         pendingRaise = parseInt(val);
         if (isNaN(pendingRaise)) pendingRaise = 0; 
@@ -527,20 +590,20 @@
         if (act === 'fold') {
             p.folded = true;
             showActionTag(idx, "弃牌", "fold");
-            speakText(`${p.name}弃牌`);
+            speakText(`${idx===0?"你":p.name} 弃牌`);
         } 
         else if (act === 'call') {
             if (callCost === 0) {
                 showActionTag(idx, "过牌", "call");
-                speakText(`${p.name}过牌`);
+                speakText(`${idx===0?"你":p.name} 过牌`);
             } else if (p.stack <= callCost) {
                 showActionTag(idx, "全押", "allin");
                 p.bet += p.stack; p.invested += p.stack; p.stack = 0; p.allIn = true;
-                speakText(`${p.name}全压`);
+                speakText(`${idx===0?"你":p.name} 全压`);
             } else {
                 showActionTag(idx, `跟注 $${callCost}`, "call");
                 p.stack -= callCost; p.bet += callCost; p.invested += callCost;
-                speakText(`${p.name}跟注`);
+                speakText(`${idx===0?"你":p.name} 跟注`);
             }
         } 
         else if (act === 'raise') {
@@ -549,11 +612,11 @@
                 showActionTag(idx, "全押", "allin");
                 p.bet += p.stack; p.invested += p.stack; p.stack = 0; p.allIn = true;
                 raiseTarget = p.bet;
-                speakText(`${p.name}全压`);
+                speakText(`${idx===0?"你":p.name} 全压`);
             } else {
                 showActionTag(idx, `加注 $${raiseTarget}`, "raise");
                 p.stack -= needed; p.bet = raiseTarget; p.invested += needed;
-                speakText(`${p.name}加注`);
+                speakText(`${idx===0?"你":p.name} 加注`);
             }
             if (raiseTarget > highestBet) {
                 minRaiseInc = Math.max(cfg.bb, raiseTarget - highestBet);
@@ -566,7 +629,6 @@
         checkGameState();
     }
 
-    // --- 状态机推进 ---
     function checkGameState() {
         let activeCount = getActivePlayerCount();
         let actingCount = getActingPlayerCount();
@@ -578,7 +640,6 @@
         }
 
         let isRoundOver = false;
-        
         if (actingCount === 0) {
             isRoundOver = true; 
         } else {
@@ -629,6 +690,7 @@
         updateUI(); triggerNextTurn();
     }
 
+    // 核心修复01：去除 setTimeout 切局，改为显示确认按钮
     function sweepPotsAndEnd() {
         players.forEach(p => { pot += (p.bet || 0); p.bet = 0; });
         let winner = players.find(p => p.activeInGame && !p.folded);
@@ -638,25 +700,25 @@
         
         if (winner && winner.id === 0) {
             showCenterResult(`+ $${pot - myLoss}`, "win", "不战而胜");
-            speakText("你赢下了底池");
+            speakText("你收下了底池");
         } else {
             if (players[0].folded && myLoss > 0) {
                 showCenterResult(`- $${myLoss}`, "lose", "弃牌止损");
-                speakText("对手收下底池");
             } else if (players[0].folded && myLoss === 0) {
                 showCenterResult(`$0`, "info", "未入池");
             } else {
                  showCenterResult(`- $${myLoss}`, "lose", "对手收下底池");
-                 speakText("对手收下底池");
             }
         }
         
         isHandActive = false; 
-        updateUI(); // 极客核心：强制所有人翻开底牌
-        setTimeout(startNewHand, 4000); 
+        document.getElementById('table').classList.add('showdown-mode'); // 核心修复02：底牌置顶
+        updateUI(); // 触发全场强制亮牌
+        
+        saveGameState(); // 后台自动存档
+        document.getElementById('next-hand-container').style.display = 'block'; // 呼出下一局确认按钮
     }
 
-    // --- 摊牌与边池引擎 ---
     function getBest5(cards) {
         let maxScore = -1, name = ""; let combos = [];
         function gen(start, cur) { if (cur.length === 5) { combos.push([...cur]); return; } for (let i = start; i < cards.length; i++) { cur.push(cards[i]); gen(i + 1, cur); cur.pop(); } }
@@ -678,7 +740,8 @@
     function evaluateShowdown() {
         players.forEach(p => { pot += (p.bet || 0); p.bet = 0; p.origInvest = p.invested; }); 
         isHandActive = false; 
-        updateUI(); // 触发全员亮牌
+        document.getElementById('table').classList.add('showdown-mode'); 
+        updateUI(); // 触发强制摊牌置顶
 
         players.forEach(p => {
             if (p.activeInGame && !p.folded) {
@@ -729,31 +792,28 @@
         
         if (myNet > 0) {
             showCenterResult(`+ $${myNet}`, "win", "赢得摊牌");
-            speakText("你赢下了底池");
+            speakText("你赢下了摊牌");
         } else if (myNet < 0) {
             showCenterResult(`- $${Math.abs(myNet)}`, "lose", "摊牌失利");
-            speakText("很遗憾，对手牌更大");
+            speakText("很遗憾，摊牌失利");
         } else {
             showCenterResult(`平分底池`, "info", "双方牌力相同");
             speakText("平分底池");
         }
 
         updateUI();
-        setTimeout(startNewHand, 4000); 
+        saveGameState(); 
+        document.getElementById('next-hand-container').style.display = 'block'; 
     }
 
-
-    // --- Triton 级 AI 大脑引擎 (优化算力防卡死) ---
-
+    // --- Triton 级 AI 大脑引擎 (针对性修复太紧与要价值偏弱) ---
     function triggerNextTurn() {
         if (!isHandActive || isAnimating) return;
         if (toActIdx === 0) return; 
-
         let delay = (players[0].folded || players[0].allIn) ? 10 : (1000 + Math.random() * 1500);
         setTimeout(processAITurn, delay);
     }
 
-    // 获取前 k 张牌的局部洗牌，极大地缩减计算负担
     function getPartialShuffle(deckArray, k) {
         let temp = [...deckArray];
         for (let i = temp.length - 1; i > temp.length - 1 - k; i--) {
@@ -802,7 +862,6 @@
             let livePot = pot + players.reduce((sum, p) => sum + (p.bet || 0), 0);
             let oppsCount = getActivePlayerCount() - 1;
             
-            // 翻牌前(Preflop)算力优化，只需较少迭代即可获得极高精度
             let iters = street === 0 ? 500 : (oppsCount > 2 ? 800 : 1200); 
             let eq = calcEquity(ai.cards, oppsCount, iters); 
             let potOdds = callCost > 0 ? callCost / (livePot + callCost) : 0;
@@ -811,48 +870,58 @@
             let rf = Math.random();
             let act = 'fold';
 
-            // 剥削系统与位置意识
+            // 核心修复04 & 05：动态修正翻前防守和入池底线
+            let avgEq = 1.0 / (oppsCount + 1);
+            let pfThreshold = avgEq * prof.tightness * 0.85; 
+
             let hVPIP = (tracker.hands >= 5) ? (tracker.vpip/tracker.hands) : 0.5;
             let hAF = (tracker.calls > 0) ? (tracker.raises/tracker.calls) : 1.0;
             
             let currentVPIP = prof.vpip;
             let currentBluff = prof.bluff;
 
-            // 位置判断：最后两个行动者加成
             let actorsLeft = getActingPlayerCount() - 1;
-            if (actorsLeft <= 1) { currentVPIP *= 1.4; currentBluff *= 1.4; } // BTN/CO 位置激进
-            else if (actorsLeft >= 4) { currentVPIP *= 0.6; currentBluff *= 0.6; } // UTG 极紧
+            if (actorsLeft <= 1) { currentVPIP *= 1.4; currentBluff *= 1.4; } 
+            else if (actorsLeft >= 4) { currentVPIP *= 0.6; currentBluff *= 0.6; } 
 
             if (!players[0].folded) {
-                if (hVPIP > 0.6 && hAF < 1.0) currentBluff = 0; // 不对跟注站诈唬
-                else if (hVPIP < 0.3) currentBluff += 0.20; // 疯狂偷盲
-                
-                if (hAF > 2.5) potOdds = Math.max(0, potOdds - 0.15); // 抓鸡防御
+                if (hVPIP > 0.6 && hAF < 1.0) currentBluff = 0; 
+                else if (hVPIP < 0.3) currentBluff += 0.20; 
+                if (hAF > 2.5) potOdds = Math.max(0, potOdds - 0.15); 
             }
 
             if (callCost > cfg.bb) eq -= (callCost / livePot) * 0.2; 
 
-            if (street === 0 && eq < (0.4 / prof.tightness) && callCost > 0) {
-                act = 'fold';
+            // 翻前放宽入池，允许买牌
+            if (street === 0 && callCost > 0) {
+                if (eq < pfThreshold) {
+                    if (callCost <= cfg.bb * 2 && rf < currentVPIP * 1.5) act = 'call';
+                    else act = 'fold';
+                }
+            }
+            
+            if (act === 'fold') {
+                // 维持 fold
+            } else if (callCost === 0) {
+                if (eq > 0.65 && rf < prof.aggr) act = 'raise';
+                else if (rf < currentBluff * 0.5) act = 'raise'; 
+                else act = 'call';
             } else {
-                if (callCost === 0) {
-                    if (eq > 0.65 && rf < prof.aggr) act = 'raise';
-                    else if (rf < currentBluff * 0.5) act = 'raise'; 
-                    else act = 'call';
+                if (eq >= potOdds) {
+                    // 放宽加注底线，更有攻击性
+                    if (rf < prof.aggr && eq > 0.6) act = 'raise'; else act = 'call';
                 } else {
-                    if (eq >= potOdds) {
-                        if (rf < prof.aggr && eq > 0.7) act = 'raise'; else act = 'call';
-                    } else {
-                        if (rf < currentBluff) act = 'raise'; 
-                        else if (rf < currentVPIP * 0.4) act = 'call'; 
-                        else act = 'fold';
-                    }
+                    // 提升防守跟注频率
+                    if (rf < currentBluff) act = 'raise'; 
+                    else if (eq > potOdds * 0.7 && rf < currentVPIP) act = 'call'; 
+                    else if (rf < currentVPIP * 0.6) act = 'call'; 
+                    else act = 'fold';
                 }
             }
 
             let hasAllinOpponent = players.some(p => p.activeInGame && p.allIn && p.id !== ai.id);
             if (hasAllinOpponent) {
-                if (eq >= potOdds * 1.2) act = 'call'; else act = 'fold';
+                if (eq >= potOdds * 1.1) act = 'call'; else act = 'fold';
             }
 
             if (act === 'raise') {
@@ -865,27 +934,27 @@
                 } else {
                     let target = 0;
                     if (street === 0) {
-                        // 翻前标准下注：3BB + 溜入者
+                        // 职牌翻前加注尺度：3倍+溜入者
                         let limpers = players.filter(p => p.activeInGame && p.bet === cfg.bb).length;
-                        target = highestBet === cfg.bb ? (cfg.bb * 3 + limpers * cfg.bb) : highestBet * 2.5;
+                        if (highestBet === cfg.bb) target = cfg.bb * (rf < 0.5 ? 3 : 2.5) + (limpers * cfg.bb);
+                        else target = highestBet * (rf < 0.5 ? 3 : 2.5);
                     } else {
-                        let sizes = [0.33, 0.5, 0.75, 1.0];
+                        // 职牌翻后加注尺度，引入超池
+                        let sizes = [0.5, 0.66, 0.75, 1.0, 1.2]; 
                         let sizePct = sizes[Math.floor(Math.random() * sizes.length)];
-                        if (eq > 0.85) sizePct = 0.75; // 坚果求稳
+                        if (eq > 0.8) sizePct = rf < 0.5 ? 0.75 : 1.0; 
+                        else if (eq < 0.3) sizePct = 0.5; 
                         target = highestBet + Math.floor(livePot * sizePct);
                     }
                     
-                    target = target - (target % cfg.bb); // 规整
-                    
+                    target = target - (target % cfg.bb); 
                     if (target < minT) target = minT;
                     if (target > maxT) target = maxT;
                     executeAction(toActIdx, 'raise', target);
                     return;
                 }
             }
-            
             executeAction(toActIdx, act);
-
         } catch (e) {
             console.error("AI 强制熔断", e);
             let safeCallCost = highestBet - ai.bet;
@@ -893,7 +962,7 @@
         }
     }
 
-    // --- HUD 数据指导与警告 ---
+    // --- HUD 数据看板指导 ---
     function showHUD() {
         let vpipStr = tracker.hands > 0 ? ((tracker.vpip / tracker.hands) * 100).toFixed(1) : 0;
         let pfrStr = tracker.hands > 0 ? ((tracker.pfr / tracker.hands) * 100).toFixed(1) : 0;
@@ -901,7 +970,7 @@
         let net = tracker.totalPnl + (players[0] ? players[0].stack - sessionBuyin : 0);
 
         let advice = "";
-        let numP = cfg.numOpponents + 1; // 加上自己
+        let numP = cfg.numOpponents + 1; 
         
         if (numP === 2) {
             advice = `<div style='background:rgba(212,175,55,0.1); padding:10px; border-radius:8px; border:1px dashed var(--gold); margin-top:15px; font-size:13px;'><b>💡 单挑 (1V1) 导师点评：</b><br>• VPIP 建议: <b style='color:var(--raise)'>60% - 80%</b> (目前: ${vpipStr}%)<br>• PFR 建议: <b style='color:var(--raise)'>50% - 70%</b> (目前: ${pfrStr}%)<br>• AF 建议: <b style='color:var(--raise)'>2.0 - 3.0</b> (目前: ${afStr})<br><i style='color:#8b9eb3'>提示：单挑需要极高频抢池，不要做老实人。</i></div>`;
