@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Triton Poker Pro - M5 iPad 专属博弈版 V21</title>
+    <title>Triton Poker Pro - M5 iPad 定制版 V22</title>
     <style>
         :root { 
             --table-bg: radial-gradient(ellipse at center, #1b2838 0%, #0d131a 100%);
@@ -13,9 +13,9 @@
         }
         body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: #05070a; color: var(--text-main); margin: 0; overflow: hidden; display: flex; flex-direction: column; height: 100vh; user-select: none; -webkit-font-smoothing: antialiased;}
 
-        /* 系统菜单栏 */
-        #hud-btn { position: absolute; top: 20px; left: 20px; background: rgba(13, 19, 26, 0.8); border: 1px solid var(--gold); color: var(--gold); padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; z-index: 500; font-size: 16px;}
-        #menu-btn { position: absolute; top: 20px; right: 20px; background: rgba(231, 76, 60, 0.2); border: 1px solid var(--alert); color: var(--alert); padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; z-index: 500; font-size: 16px;}
+        /* 系统菜单栏：极致靠边，避免与玩家冲突 */
+        #hud-btn { position: absolute; top: 15px; left: 15px; background: rgba(13, 19, 26, 0.8); border: 1px solid var(--gold); color: var(--gold); padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; z-index: 500; font-size: 15px;}
+        #menu-btn { position: absolute; top: 15px; right: 15px; background: rgba(231, 76, 60, 0.2); border: 1px solid var(--alert); color: var(--alert); padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; z-index: 500; font-size: 15px;}
 
         .modal { position: absolute; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(10px);}
         .modal-content { background: #131b24; border: 2px solid var(--gold); padding: 40px; border-radius: 16px; text-align: center; max-width: 450px; width: 85%; box-shadow: 0 0 50px var(--gold-glow);}
@@ -32,127 +32,148 @@
         .start-btn { width: 100%; padding: 16px; background: var(--gold); color: #000; font-size: 20px; font-weight: 900; border: none; border-radius: 10px; cursor: pointer; margin-top: 15px; transition: 0.2s; box-shadow: 0 4px 15px rgba(212,175,55,0.3);}
         .start-btn:active { transform: scale(0.98); }
 
-        /* 牌桌系统 (iPad Pro 比例优化) */
+        /* 牌桌系统：核心收紧逻辑！宽度大幅缩小，留出屏幕边缘轨道 */
         #game-screen { display: none; flex: 1; position: relative; }
-        #table { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); width: 88vw; height: 55vh; max-width: 1200px; max-height: 700px; background: var(--table-bg); border-radius: 250px / 130px; border: 16px solid var(--table-border); box-shadow: inset 0 0 80px rgba(0,0,0,0.8), 0 30px 60px rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; flex-direction: column;}
+        #table { 
+            position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); 
+            width: 65vw; /* 极度收紧，避免贴边 */
+            height: 48vh; 
+            max-width: 850px; max-height: 500px; 
+            background: var(--table-bg); border-radius: 220px / 120px; 
+            border: 14px solid var(--table-border); 
+            box-shadow: inset 0 0 80px rgba(0,0,0,0.8), 0 30px 60px rgba(0,0,0,0.9); 
+            display: flex; align-items: center; justify-content: center; flex-direction: column;
+        }
         
-        #board-area { text-align: center; z-index: 15; transform: translateY(-10px);}
-        #main-pot { color: var(--gold); font-size: 26px; font-weight: 900; background: rgba(0,0,0,0.7); padding: 8px 30px; border-radius: 25px; margin-bottom: 20px; border: 1px solid rgba(212, 175, 55, 0.4); text-shadow: 0 2px 4px #000; display: inline-block;}
-        #board-cards { display: flex; gap: 10px; justify-content: center; min-height: 100px;}
+        #board-area { text-align: center; z-index: 15; display: flex; flex-direction: column; align-items: center;}
+        #main-pot { color: var(--gold); font-size: 22px; font-weight: 900; background: rgba(0,0,0,0.7); padding: 6px 25px; border-radius: 20px; margin-bottom: 15px; border: 1px solid rgba(212, 175, 55, 0.4); text-shadow: 0 2px 4px #000; }
+        #board-cards { display: flex; gap: 6px; justify-content: center; align-items: center; min-height: 90px;}
 
-        /* 座位系统与绝对零遮挡排版 */
-        .seat { position: absolute; display: flex; flex-direction: column; align-items: center; width: 130px; transition: all 0.3s;}
+        /* 座位基础结构：彻底理清层级关系 */
+        .seat { 
+            position: absolute; display: flex; flex-direction: column; align-items: center; 
+            width: 120px; transition: all 0.3s;
+        }
         
         .seat.in-hand .player-panel { border: 2px solid var(--call); box-shadow: 0 0 15px rgba(52, 152, 219, 0.5); }
         .seat.acting .player-panel { border: 2px solid var(--gold); box-shadow: 0 0 30px var(--gold); transform: scale(1.08); }
         .seat.acting { z-index: 50; }
         .seat.folded { opacity: 0.35; filter: grayscale(100%) brightness(0.7); z-index: 1; pointer-events: none;}
         
-        #seat-0.hero-acting { z-index: 200 !important; }
-        #seat-0.hero-acting .hole-cards .card { transform: scale(0.9) translateY(-15px); box-shadow: 0 15px 30px rgba(212, 175, 55, 0.6); }
+        /* 座位定位：贴近牌桌外围，远离物理屏幕边缘，上下拉开距离防止遮挡公共牌 */
+        #seat-0 { bottom: -24%; left: 50%; transform: translateX(-50%); z-index: 30;} 
+        #seat-3 { top: -24%; left: 50%; transform: translateX(-50%); z-index: 25;} 
+        #seat-1 { bottom: 2%; left: -18%; }
+        #seat-2 { top: 18%; left: -18%; } /* 顶部下拉避开战绩按钮 */
+        #seat-4 { top: 18%; right: -18%; }
+        #seat-5 { bottom: 2%; right: -18%; }
 
-        /* 结算完美展开，不重叠 */
+        /* 零遮挡核心 1：手牌区域锚定底部，决不乱飞 */
+        .hole-cards { 
+            display: flex; gap: 3px; 
+            margin-bottom: -15px; /* 让底牌完美下沉到面板后方 */
+            z-index: 4; justify-content: center; 
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .hole-cards .card { 
+            transform: scale(0.65); 
+            transform-origin: bottom center; /* 绝对核心：放大时底部锚定，只往两边撑，绝不往上飞！ */
+            margin: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+        }
+
+        /* 零遮挡核心 2：结算摊牌平滑展开 */
         #table.showdown-mode .seat:not(.folded) { z-index: 150 !important; }
         #table.showdown-mode .seat:not(.folded) .hole-cards { 
-            gap: 12px; /* 充分展开 */
-            transform: scale(1.15) translateY(-20px); 
+            gap: 10px; /* 扇形展开不重叠 */
+            margin-bottom: -5px; /* 稍微上浮露出身位，但绝不碰公共牌 */
             z-index: 250;
         }
-        #table.showdown-mode .seat:not(.folded) .hole-cards .card { box-shadow: 0 15px 40px rgba(0,0,0,0.9); }
-        
-        /* 气泡绝对拉高 */
-        #table.showdown-mode .action-tag {
-            top: -110px !important; 
-            transform: translateX(-50%) scale(1.2) !important;
-            z-index: 300;
+        #table.showdown-mode .seat:not(.folded) .hole-cards .card { 
+            transform: scale(0.85); /* 原地放大 */
+            box-shadow: 0 10px 25px rgba(0,0,0,0.9); 
         }
 
-        /* 动态座位位置优化，适配宽屏 */
-        #seat-0 { bottom: -10%; left: 50%; transform: translateX(-50%); z-index: 30;} 
-        #seat-1 { bottom: 8%; left: -6%; }
-        #seat-2 { top: 12%; left: -6%; }
-        #seat-3 { top: -20%; left: 50%; transform: translateX(-50%); }
-        #seat-4 { top: 12%; right: -6%; }
-        #seat-5 { bottom: 8%; right: -6%; }
-
-        /* 面板与头像 */
-        .player-panel { 
-            background: rgba(10, 14, 20, 0.95); 
-            border: 2px solid #334; border-radius: 12px; 
-            padding: 30px 10px 10px 10px; 
-            text-align: center; width: 100%; box-sizing: border-box; 
-            position: relative; z-index: 5; margin-top: 15px; transition: 0.3s;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.8);
-        }
-        
-        .p-avatar { 
-            width: 56px; height: 56px; 
-            background: linear-gradient(135deg, #2a3b4c, #0a0e14); 
-            border: 3px solid var(--gold); border-radius: 50%; 
-            display: flex; justify-content: center; align-items: center; 
-            font-size: 32px; position: absolute; top: -30px; left: 50%; 
-            transform: translateX(-50%); box-shadow: 0 8px 20px rgba(0,0,0,0.9), inset 0 0 15px rgba(212,175,55,0.3); 
-            z-index: 10;
-        }
-
-        .p-name { font-size: 15px; font-weight: bold; color: #8b9eb3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
-        .p-stack { font-size: 18px; font-weight: 900; color: #fff; margin-top: 4px;}
-        
-        .dealer-btn { position: absolute; top: -10px; right: -15px; background: #fff; color: #000; width: 28px; height: 28px; border-radius: 50%; font-size: 16px; font-weight: 900; line-height: 28px; text-align: center; display: none; box-shadow: 0 3px 8px #000; z-index: 15;}
-        
-        /* 气泡基础高度，已避开头像 */
+        /* 零遮挡核心 3：动作气泡绝不碰扑克牌 */
         .action-tag { 
-            background: #2c3e50; color: #fff; font-size: 16px; padding: 8px 18px; border-radius: 10px; font-weight: 900; 
-            position: absolute; top: -65px; 
-            left: 50%; transform: translateX(-50%) translateY(10px) scale(0.8); 
-            opacity: 0; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 80; white-space: nowrap; 
-            box-shadow: 0 6px 20px rgba(0,0,0,0.7); border: 2px solid #fff; pointer-events: none;
+            background: #2c3e50; color: #fff; font-size: 15px; padding: 6px 14px; border-radius: 8px; font-weight: 900; 
+            position: absolute; 
+            top: -75px; /* 死死锁定在最高处安全区 */
+            left: 50%; transform: translateX(-50%) scale(0.9); 
+            opacity: 0; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 300; white-space: nowrap; 
+            box-shadow: 0 6px 15px rgba(0,0,0,0.8); border: 2px solid #fff; pointer-events: none;
         }
-        .action-tag.show { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+        .action-tag.show { opacity: 1; transform: translateX(-50%) scale(1); }
+        
+        #table.showdown-mode .action-tag {
+            top: -105px !important; /* 摊牌牌面变大时，气泡随之飙升，绝对防重叠！ */
+            transform: translateX(-50%) scale(1.1) !important;
+        }
+
         .tag-fold { background: var(--alert); border-color: #c0392b; }
         .tag-call { background: var(--call); border-color: #2980b9; }
         .tag-raise { background: var(--raise); border-color: #27ae60; }
         .tag-allin { background: #e67e22; border-color: var(--gold); color: #000;}
 
-        .bet-chip { background: radial-gradient(circle, #f1c40f 30%, #d35400 100%); color: #fff; font-weight: 900; font-size: 15px; padding: 6px 16px; border-radius: 15px; border: 2px dashed #fff; margin-top: 8px; opacity: 0; transition: 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.5);}
+        /* 面板与头像重构 */
+        .player-panel { 
+            width: 100%; background: rgba(10, 14, 20, 0.95); 
+            border: 2px solid #334; border-radius: 12px; 
+            padding: 28px 8px 8px 8px; /* 顶部留白给头像 */
+            text-align: center; box-sizing: border-box; 
+            position: relative; z-index: 10; /* Z轴置顶，死死压住手牌底部边界 */
+            box-shadow: 0 6px 20px rgba(0,0,0,0.8);
+        }
+        
+        .p-avatar { 
+            width: 48px; height: 48px; 
+            background: linear-gradient(135deg, #2a3b4c, #0a0e14); 
+            border: 2px solid var(--gold); border-radius: 50%; 
+            display: flex; justify-content: center; align-items: center; 
+            font-size: 28px; position: absolute; top: -26px; left: 50%; 
+            transform: translateX(-50%); box-shadow: 0 5px 15px rgba(0,0,0,0.9), inset 0 0 10px rgba(212,175,55,0.3); 
+            z-index: 20;
+        }
 
-        /* 零遮挡核心：安全间距 */
-        .hole-cards { display: flex; gap: 4px; margin-bottom: 0px; z-index: 4; justify-content: center; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);}
-        .hole-cards .card { transform: scale(0.75); transform-origin: top center; margin: 0; transition: all 0.3s;}
+        .p-name { font-size: 14px; font-weight: bold; color: #8b9eb3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+        .p-stack { font-size: 16px; font-weight: 900; color: #fff; margin-top: 4px;}
+        
+        .dealer-btn { position: absolute; top: -8px; right: -12px; background: #fff; color: #000; width: 24px; height: 24px; border-radius: 50%; font-size: 14px; font-weight: 900; line-height: 24px; text-align: center; display: none; box-shadow: 0 3px 8px #000; z-index: 25;}
 
-        /* iPad 级高清扑克牌 */
-        .card { width: 72px; height: 104px; background: #fff; border-radius: 8px; box-shadow: 0 6px 15px rgba(0,0,0,0.6); position: relative; box-sizing: border-box; overflow: hidden;}
-        .card.back { background: radial-gradient(var(--card-back) 20%, transparent 20%), radial-gradient(var(--card-back) 20%, transparent 20%), #962d22; background-size: 10px 10px; background-position: 0 0, 5px 5px; border: 3px solid #fff; }
-        .card .top-idx { position: absolute; top: 3px; left: 5px; display: flex; flex-direction: column; align-items: center; line-height: 0.85; }
-        .card .bot-idx { position: absolute; bottom: 3px; right: 5px; display: flex; flex-direction: column; align-items: center; line-height: 0.85; transform: rotate(180deg); }
-        .card-val { font-size: 19px; font-weight: 900; letter-spacing: -1px; }
-        .card-suit { font-size: 16px; }
-        .card-center { font-size: 40px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.12; pointer-events: none;}
+        .bet-chip { background: radial-gradient(circle, #f1c40f 30%, #d35400 100%); color: #fff; font-weight: 900; font-size: 14px; padding: 5px 14px; border-radius: 15px; border: 2px dashed #fff; margin-top: 6px; opacity: 0; transition: 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.6);}
+
+        /* 统一高清扑克牌比例 */
+        .card { width: 62px; height: 90px; background: #fff; border-radius: 6px; box-shadow: 0 6px 12px rgba(0,0,0,0.5); position: relative; box-sizing: border-box; overflow: hidden;}
+        .card.back { background: radial-gradient(var(--card-back) 20%, transparent 20%), radial-gradient(var(--card-back) 20%, transparent 20%), #962d22; background-size: 10px 10px; background-position: 0 0, 5px 5px; border: 2px solid #fff; }
+        .card .top-idx { position: absolute; top: 3px; left: 4px; display: flex; flex-direction: column; align-items: center; line-height: 0.85; }
+        .card .bot-idx { position: absolute; bottom: 3px; right: 4px; display: flex; flex-direction: column; align-items: center; line-height: 0.85; transform: rotate(180deg); }
+        .card-val { font-size: 17px; font-weight: 900; letter-spacing: -1px; }
+        .card-suit { font-size: 14px; }
+        .card-center { font-size: 34px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.12; pointer-events: none;}
 
         /* iPad 大尺寸操作台 */
-        #action-console { position: absolute; bottom: 0; left: 0; right: 0; background: #0a0e14; padding: 25px 30px; border-top: 1px solid #334; display: none; flex-direction: column; gap: 15px; z-index: 100;}
-        .console-row { display: flex; gap: 15px; justify-content: space-between; }
-        .action-btn { flex: 1; padding: 18px 0; border: none; border-radius: 10px; font-size: 20px; font-weight: 900; color: white; cursor: pointer; transition: 0.1s; box-shadow: 0 4px 12px rgba(0,0,0,0.5);}
+        #action-console { position: absolute; bottom: 0; left: 0; right: 0; background: #0a0e14; padding: 20px 25px; border-top: 1px solid #334; display: none; flex-direction: column; gap: 12px; z-index: 100;}
+        .console-row { display: flex; gap: 12px; justify-content: space-between; }
+        .action-btn { flex: 1; padding: 16px 0; border: none; border-radius: 10px; font-size: 18px; font-weight: 900; color: white; cursor: pointer; transition: 0.1s; box-shadow: 0 4px 12px rgba(0,0,0,0.5);}
         .action-btn:active { transform: scale(0.96); }
         .action-btn:disabled { opacity: 0.3; cursor: not-allowed; filter: grayscale(1); box-shadow: none;}
         .btn-fold { background: #34495e; } .btn-fold:hover:not(:disabled) {background: var(--alert);}
         .btn-call { background: var(--call); }
         .btn-raise { background: var(--raise); flex: 2;}
-        .btn-pct { background: #1b2838; border: 1px solid #334; font-size: 16px; padding: 12px 0; box-shadow: none;}
+        .btn-pct { background: #1b2838; border: 1px solid #334; font-size: 15px; padding: 10px 0; box-shadow: none;}
         .btn-pct:hover:not(:disabled) { background: #2a3b4c; }
         
-        .slider-wrapper { display: flex; align-items: center; gap: 20px; background: #131b24; padding: 12px 25px; border-radius: 12px; }
+        .slider-wrapper { display: flex; align-items: center; gap: 15px; background: #131b24; padding: 10px 20px; border-radius: 10px; }
         input[type=range] { flex: 1; height: 8px; background: #334; border-radius: 4px; outline: none; -webkit-appearance: none; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 32px; height: 32px; background: var(--gold); border-radius: 50%; cursor: pointer; box-shadow: 0 0 10px rgba(0,0,0,0.8);}
-        #raise-amount { color: var(--gold); font-weight: 900; font-size: 24px; min-width: 80px; text-align: right;}
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 30px; height: 30px; background: var(--gold); border-radius: 50%; cursor: pointer; box-shadow: 0 0 10px rgba(0,0,0,0.8);}
+        #raise-amount { color: var(--gold); font-weight: 900; font-size: 22px; min-width: 75px; text-align: right;}
 
         #next-hand-container { position: absolute; bottom: 22%; left: 50%; transform: translateX(-50%); z-index: 400; display: none; width: 100%; text-align: center;}
 
         /* 结算大字报 */
         #result-overlay { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; z-index: 200; opacity: 0; transition: opacity 0.4s; }
         #result-overlay.show { opacity: 1; }
-        .res-amt { font-size: 70px; font-weight: 900; text-shadow: 0 6px 30px rgba(0,0,0,0.9); white-space: nowrap;}
-        .res-sub { font-size: 22px; color: #e0e6ed; font-weight: bold; background: rgba(0,0,0,0.85); border: 1px solid #555; padding: 8px 25px; border-radius: 15px; display: inline-block; margin-top: 10px; }
+        .res-amt { font-size: 60px; font-weight: 900; text-shadow: 0 6px 30px rgba(0,0,0,0.9); white-space: nowrap;}
+        .res-sub { font-size: 20px; color: #e0e6ed; font-weight: bold; background: rgba(0,0,0,0.85); border: 1px solid #555; padding: 8px 25px; border-radius: 15px; display: inline-block; margin-top: 10px; }
         .res-win { color: #2ecc71; }
         .res-lose { color: #e74c3c; }
     </style>
@@ -232,7 +253,7 @@
 
     <div id="setup-screen">
         <div class="setup-box">
-            <h1>TRITON PRO <span style="font-size:14px; color:var(--alert)">V21 大师版</span></h1>
+            <h1>TRITON PRO <span style="font-size:14px; color:var(--alert)">V22 定制版</span></h1>
             <div class="form-row">
                 <label>玩家昵称</label>
                 <input type="text" id="cfg-name" value="玩家 1">
@@ -269,12 +290,11 @@
     const RANKS = [{v:2, l:'2'},{v:3, l:'3'},{v:4, l:'4'},{v:5, l:'5'},{v:6, l:'6'},{v:7, l:'7'},{v:8, l:'8'},{v:9, l:'9'},{v:10, l:'10'},{v:11, l:'J'},{v:12, l:'Q'},{v:13, l:'K'},{v:14, l:'A'}];
     const HAND_NAMES = ["高牌", "一对", "两对", "三条", "顺子", "同花", "葫芦", "四条", "同花顺"];
 
-    // 核心修复02：前端彻底隐藏的【大师博弈 AI 性格引擎】
     const AI_PERSONALITIES = [
-        { type: 'TAG', vpip: 0.25, pfr: 0.20, aggr: 0.85, bluff: 0.45, trap: 0.35, callStation: false }, // 紧凶：狡猾，会抓鸡也会埋伏
-        { type: 'LAG', vpip: 0.45, pfr: 0.35, aggr: 0.95, bluff: 0.70, trap: 0.10, callStation: false }, // 松凶：激进，极爱诈唬
-        { type: 'TPA', vpip: 0.15, pfr: 0.05, aggr: 0.30, bluff: 0.05, trap: 0.05, callStation: false }, // 紧弱：老实人，只有坚果才反击
-        { type: 'LPA', vpip: 0.55, pfr: 0.10, aggr: 0.25, bluff: 0.10, trap: 0.05, callStation: true }   // 松弱：跟注站，打死不弃牌
+        { type: 'TAG', vpip: 0.25, pfr: 0.20, aggr: 0.85, bluff: 0.45, trap: 0.35, callStation: false }, 
+        { type: 'LAG', vpip: 0.45, pfr: 0.35, aggr: 0.95, bluff: 0.70, trap: 0.10, callStation: false }, 
+        { type: 'TPA', vpip: 0.15, pfr: 0.05, aggr: 0.30, bluff: 0.05, trap: 0.05, callStation: false }, 
+        { type: 'LPA', vpip: 0.55, pfr: 0.10, aggr: 0.25, bluff: 0.10, trap: 0.05, callStation: true }   
     ];
 
     const NAME_POOL = [
@@ -297,18 +317,17 @@
     let sessionBuyin = 0;
 
     window.onload = function() {
-        if(localStorage.getItem('TritonSaveV21')) document.getElementById('btn-load-save').style.display = 'block';
+        if(localStorage.getItem('TritonSaveV22')) document.getElementById('btn-load-save').style.display = 'block';
     };
 
     function saveGameState() {
-        // 保存时剔除profile对象避免循环或暴露过多，只保留需要的数据
         let saveData = { cfg, players, tracker, sessionBuyin, pot, street, dealerIdx, board };
-        localStorage.setItem('TritonSaveV21', JSON.stringify(saveData));
+        localStorage.setItem('TritonSaveV22', JSON.stringify(saveData));
         document.getElementById('btn-load-save').style.display = 'block';
     }
 
     function loadGameFromSave() {
-        let saved = localStorage.getItem('TritonSaveV21');
+        let saved = localStorage.getItem('TritonSaveV22');
         if (saved) {
             let data = JSON.parse(saved);
             cfg = data.cfg; players = data.players; tracker = data.tracker; 
@@ -398,7 +417,6 @@
             if (isNaN(minTarget)) minTarget = highestBet + cfg.bb;
             if (minTarget > maxTarget) minTarget = maxTarget;
 
-            // 滑块精度限制：小盲倍数
             let sb = Math.max(1, Math.floor(cfg.bb / 2));
             let slider = document.getElementById('bet-slider');
             slider.min = minTarget; slider.max = maxTarget; slider.step = sb; 
@@ -435,7 +453,7 @@
         cfg.name = document.getElementById('cfg-name').value || "Hero";
         cfg.bb = parseInt(document.getElementById('cfg-bb').value) || 10;
         cfg.startChips = cfg.bb * (parseInt(document.getElementById('cfg-buyin').value) || 100);
-        cfg.numOpponents = 5; // 固定6人桌逻辑
+        cfg.numOpponents = 5; 
         cfg.anteRatio = parseFloat(document.getElementById('cfg-ante').value) || 0;
 
         sessionBuyin = cfg.startChips;
@@ -464,18 +482,16 @@
         startNewHand();
     }
 
-    // 核心重构：暗箱分配 5 种特定 AI 角色
     function buildPlayers() {
         players = [];
         players.push({ id: 0, seat: 0, name: cfg.name, avatar: '😎', stack: cfg.startChips, bet: 0, invested: 0, cards: [], folded: false, allIn: false, activeInGame: true, isAI: false });
         
-        // 组装 5 个角色的灵魂：TAG, LAG, TPA, LPA + 1个随机
         let roles = [
             AI_PERSONALITIES[0], AI_PERSONALITIES[1], 
             AI_PERSONALITIES[2], AI_PERSONALITIES[3], 
             AI_PERSONALITIES[Math.floor(Math.random() * AI_PERSONALITIES.length)]
         ];
-        roles.sort(() => Math.random() - 0.5); // 打乱座位分布
+        roles.sort(() => Math.random() - 0.5); 
         
         let availableNames = [...NAME_POOL];
         availableNames.sort(() => Math.random() - 0.5);
@@ -488,7 +504,7 @@
                 name: char.name, avatar: char.avatar, 
                 stack: cfg.startChips, bet: 0, invested: 0, cards: [], 
                 folded: false, allIn: false, activeInGame: true, isAI: true, 
-                profile: role // 彻底隐藏前端显示
+                profile: role
             });
         }
     }
@@ -509,14 +525,14 @@
         if (players[0].stack <= 0) {
             document.getElementById('go-title').innerText = "💀 筹码耗尽";
             document.getElementById('game-over-modal').style.display = 'flex';
-            localStorage.removeItem('TritonSaveV21'); 
+            localStorage.removeItem('TritonSaveV22'); 
             return;
         }
         let aiAlive = players.filter(p => p.activeInGame && p.isAI && p.stack > 0).length;
         if (aiAlive === 0) {
             document.getElementById('go-title').innerText = "🏆 霸桌成功！";
             document.getElementById('game-over-modal').style.display = 'flex';
-            localStorage.removeItem('TritonSaveV21');
+            localStorage.removeItem('TritonSaveV22');
             return;
         }
 
@@ -590,7 +606,7 @@
         let target = highestBet + Math.floor(livePot * pct);
         
         let sb = Math.max(1, Math.floor(cfg.bb / 2));
-        target = Math.round(target / sb) * sb; // 对齐到小盲倍数
+        target = Math.round(target / sb) * sb;
 
         let slider = document.getElementById('bet-slider');
         if (target > parseInt(slider.max)) target = parseInt(slider.max);
@@ -884,7 +900,6 @@
         return (wins + ties * 0.5) / iters;
     }
 
-    // 核心重构：拥有“设陷阱(Trap)”和“跟注站(Calling Station)”能力的大脑
     function processAITurn() {
         if (!isHandActive || isAnimating) return;
         let ai = players[toActIdx];
@@ -921,18 +936,15 @@
 
             if (callCost > cfg.bb) eq -= (callCost / livePot) * 0.2; 
 
-            // 决策树重构
             if (street === 0) {
                 let pfThreshold = (1.0 / (oppsCount + 1)) * 0.8; 
                 if (callCost === 0) {
                     act = (eq > 0.6 && rf < prof.aggr) ? 'raise' : 'call';
                 } else {
                     if (eq >= pfThreshold) {
-                        // 【新特性】：翻前慢打 (Trap)
                         if (eq > 0.80 && rf < prof.trap) act = 'call'; 
                         else act = (rf < prof.aggr && eq > 0.55) ? 'raise' : 'call';
                     } else {
-                        // 跟注站特性：烂牌也平跟
                         if (prof.callStation && callCost <= cfg.bb * 3 && rf < 0.6) act = 'call';
                         else if (callCost <= cfg.bb * 2.5 && rf < currentVPIP * 1.5) act = 'call';
                         else if (rf < currentBluff * 0.4) act = 'raise'; 
@@ -941,29 +953,24 @@
                 }
             } else {
                 if (callCost === 0) {
-                    // 没人打，主动表态
-                    if (eq > 0.85 && rf < prof.trap) act = 'call'; // 坚果过牌埋伏
+                    if (eq > 0.85 && rf < prof.trap) act = 'call'; 
                     else if (eq > 0.6) act = (rf < prof.aggr) ? 'raise' : 'call';
                     else if (eq > 0.3) act = (rf < prof.aggr * 0.5) ? 'raise' : 'call';
-                    else act = (rf < currentBluff) ? 'raise' : 'call'; // 纯空气诈唬
+                    else act = (rf < currentBluff) ? 'raise' : 'call'; 
                 } else {
-                    // 面对下注
                     if (eq >= potOdds) {
-                        // 【新特性】：翻后慢打 (Trap)
                         if (eq > 0.85 && rf < prof.trap) act = 'call';
                         else if (eq > 0.70 && rf < prof.aggr) act = 'raise'; 
                         else act = 'call';
                     } else {
-                        // 【新特性】：跟注站 (Calling Station) 强行防守
                         if (prof.callStation && eq > potOdds * 0.6 && rf < 0.8) act = 'call';
-                        else if (rf < currentBluff * 0.6) act = 'raise'; // 半诈唬
-                        else if (eq > potOdds * 0.5 && rf < currentVPIP) act = 'call'; // 浮水
+                        else if (rf < currentBluff * 0.6) act = 'raise'; 
+                        else if (eq > potOdds * 0.5 && rf < currentVPIP) act = 'call'; 
                         else act = 'fold';
                     }
                 }
             }
 
-            // 防御All-in隔离
             let hasAllinOpponent = players.some(p => p.activeInGame && p.allIn && p.id !== ai.id);
             if (hasAllinOpponent) {
                 if (eq > 0.85 && getActingPlayerCount() > 1) act = 'raise';
@@ -984,11 +991,10 @@
                         let limpers = players.filter(p => p.activeInGame && p.bet === cfg.bb).length;
                         target = highestBet === cfg.bb ? (cfg.bb * (rf < currentBluff ? 4 : 3) + limpers * cfg.bb) : highestBet * 2.5;
                     } else {
-                        // 根据下注意图极化尺度：价值/大诈唬 vs 阻挡注
                         let sizePct = 0.5;
-                        if (eq > 0.85 || rf < currentBluff * 0.5) sizePct = rf < 0.3 ? 1.5 : 1.0; // 超池或满池
+                        if (eq > 0.85 || rf < currentBluff * 0.5) sizePct = rf < 0.3 ? 1.5 : 1.0; 
                         else if (eq > 0.6) sizePct = 0.66;
-                        else sizePct = 0.33; // 便宜的诈唬/试探
+                        else sizePct = 0.33; 
                         
                         target = highestBet + Math.floor(livePot * sizePct);
                     }
