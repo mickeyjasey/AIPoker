@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Triton Poker Pro - M5 iPad 定制版 V23</title>
+    <title>Triton Poker Pro - M5 iPad 定制版 V24</title>
     <style>
         :root { 
             --table-bg: radial-gradient(ellipse at center, #1b2838 0%, #0d131a 100%);
@@ -51,7 +51,7 @@
         /* 座位基础结构：加宽防止折叠 */
         .seat { 
             position: absolute; display: flex; flex-direction: column; align-items: center; 
-            width: 140px; /* 修复03：加宽容器，给卡牌足够的横向空间 */
+            width: 140px; 
             transition: all 0.3s;
         }
         
@@ -71,7 +71,7 @@
         /* 零遮挡核心 1：强制卡牌不折叠！ */
         .hole-cards { 
             display: flex; gap: 4px; 
-            flex-wrap: nowrap !important; /* 修复03：绝对禁止折叠！ */
+            flex-wrap: nowrap !important; 
             margin-bottom: -10px; 
             z-index: 4; justify-content: center; 
             transition: all 0.3s ease;
@@ -86,7 +86,7 @@
         #table.showdown-mode .seat:not(.folded) { z-index: 150 !important; }
         #table.showdown-mode .seat:not(.folded) .hole-cards { 
             gap: 10px; 
-            margin-bottom: 2px; /* 摊牌时微微上浮，脱离头像框 */
+            margin-bottom: 2px; 
             z-index: 250;
         }
         #table.showdown-mode .seat:not(.folded) .hole-cards .card { 
@@ -94,19 +94,19 @@
             box-shadow: 0 10px 25px rgba(0,0,0,0.9); 
         }
 
-        /* 修复01 & 02：动作/结算气泡侧边悬浮逻辑 */
+        /* 动作/结算气泡侧边悬浮逻辑 */
         .action-tag { 
             background: #2c3e50; color: #fff; font-size: 15px; padding: 6px 14px; border-radius: 8px; font-weight: 900; 
             position: absolute; 
-            top: 20px; /* 高度与扑克牌齐平 */
-            right: -75px; /* 挂在界面的右侧外围，坚决不碰牌面 */
+            top: 20px; 
+            right: -75px; 
             opacity: 0; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 300; white-space: nowrap; 
             box-shadow: 0 6px 15px rgba(0,0,0,0.8); border: 2px solid #fff; pointer-events: none;
         }
         .action-tag.show { opacity: 1; transform: scale(1); }
         
         #table.showdown-mode .action-tag {
-            transform: scale(1.1) !important; /* 结算时放大气泡，但不改变位置 */
+            transform: scale(1.1) !important; 
         }
 
         /* 右侧玩家（库巴、萨姆斯等）的气泡放在左边，防止顶出屏幕 */
@@ -175,11 +175,11 @@
 
         #next-hand-container { position: absolute; bottom: 22%; left: 50%; transform: translateX(-50%); z-index: 400; display: none; width: 100%; text-align: center;}
 
-        /* 结算大字报 */
+        /* 结算大字报：添加净盈亏副标题的视觉支持 */
         #result-overlay { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; z-index: 200; opacity: 0; transition: opacity 0.4s; }
         #result-overlay.show { opacity: 1; }
         .res-amt { font-size: 60px; font-weight: 900; text-shadow: 0 6px 30px rgba(0,0,0,0.9); white-space: nowrap;}
-        .res-sub { font-size: 20px; color: #e0e6ed; font-weight: bold; background: rgba(0,0,0,0.85); border: 1px solid #555; padding: 8px 25px; border-radius: 15px; display: inline-block; margin-top: 10px; }
+        .res-sub { font-size: 18px; color: #e0e6ed; background: rgba(0,0,0,0.85); border: 1px solid #555; padding: 6px 20px; border-radius: 12px; display: inline-block; margin-top: 10px; font-weight: bold;}
         .res-win { color: #2ecc71; }
         .res-lose { color: #e74c3c; }
     </style>
@@ -259,7 +259,7 @@
 
     <div id="setup-screen">
         <div class="setup-box">
-            <h1>TRITON PRO <span style="font-size:14px; color:var(--alert)">V23 定制版</span></h1>
+            <h1>TRITON PRO <span style="font-size:14px; color:var(--alert)">V24 结算优化版</span></h1>
             <div class="form-row">
                 <label>玩家昵称</label>
                 <input type="text" id="cfg-name" value="玩家 1">
@@ -323,17 +323,17 @@
     let sessionBuyin = 0;
 
     window.onload = function() {
-        if(localStorage.getItem('TritonSaveV23')) document.getElementById('btn-load-save').style.display = 'block';
+        if(localStorage.getItem('TritonSaveV24')) document.getElementById('btn-load-save').style.display = 'block';
     };
 
     function saveGameState() {
         let saveData = { cfg, players, tracker, sessionBuyin, pot, street, dealerIdx, board };
-        localStorage.setItem('TritonSaveV23', JSON.stringify(saveData));
+        localStorage.setItem('TritonSaveV24', JSON.stringify(saveData));
         document.getElementById('btn-load-save').style.display = 'block';
     }
 
     function loadGameFromSave() {
-        let saved = localStorage.getItem('TritonSaveV23');
+        let saved = localStorage.getItem('TritonSaveV24');
         if (saved) {
             let data = JSON.parse(saved);
             cfg = data.cfg; players = data.players; tracker = data.tracker; 
@@ -531,14 +531,14 @@
         if (players[0].stack <= 0) {
             document.getElementById('go-title').innerText = "💀 筹码耗尽";
             document.getElementById('game-over-modal').style.display = 'flex';
-            localStorage.removeItem('TritonSaveV23'); 
+            localStorage.removeItem('TritonSaveV24'); 
             return;
         }
         let aiAlive = players.filter(p => p.activeInGame && p.isAI && p.stack > 0).length;
         if (aiAlive === 0) {
             document.getElementById('go-title').innerText = "🏆 霸桌成功！";
             document.getElementById('game-over-modal').style.display = 'flex';
-            localStorage.removeItem('TritonSaveV23');
+            localStorage.removeItem('TritonSaveV24');
             return;
         }
 
@@ -751,6 +751,7 @@
         updateUI(); triggerNextTurn();
     }
 
+    // 核心修复：别人全弃牌时的底池收割爽感
     function sweepPotsAndEnd() {
         players.forEach(p => { pot += (p.bet || 0); p.bet = 0; });
         let winner = players.find(p => p.activeInGame && !p.folded);
@@ -759,7 +760,10 @@
         let myLoss = players[0].invested;
         
         if (winner && winner.id === 0) {
-            showCenterResult(`+ $${pot - myLoss}`, "win", "底池收割");
+            let myNet = pot - myLoss;
+            let subtext = myNet > 0 ? `(净利润 +$${myNet})` : (myNet === 0 ? "(回本)" : `(倒亏 -$${Math.abs(myNet)})`);
+            // 直接爆出收割的总底池
+            showCenterResult(`+ $${pot}`, "win", subtext);
             speakText("你赢下了底池");
         } else {
             if (players[0].folded && myLoss > 0) {
@@ -799,6 +803,7 @@
         return {score: score, name: HAND_NAMES[type]};
     }
 
+    // 核心修复：摊牌阶段的底池收割爽感
     function evaluateShowdown() {
         players.forEach(p => { pot += (p.bet || 0); p.bet = 0; p.origInvest = p.invested; }); 
         isHandActive = false; 
@@ -851,15 +856,14 @@
         let myWin = winRecords[0] || 0;
         let myNet = myWin - players[0].origInvest;
         
-        if (myNet > 0) {
-            showCenterResult(`+ $${myNet}`, "win", "赢得摊牌");
+        if (myWin > 0) {
+            let subtext = myNet > 0 ? `(净利润 +$${myNet})` : (myNet === 0 ? "(回本)" : `(倒亏 -$${Math.abs(myNet)})`);
+            // 直接爆出收割的总底池
+            showCenterResult(`+ $${myWin}`, "win", subtext);
             speakText("你赢下了摊牌");
-        } else if (myNet < 0) {
-            showCenterResult(`- $${Math.abs(myNet)}`, "lose", "摊牌失利");
-            speakText("很遗憾，摊牌失利");
         } else {
-            showCenterResult(`平局`, "info", "平分底池");
-            speakText("平分底池");
+            showCenterResult(`- $${players[0].origInvest}`, "lose", "摊牌失利");
+            speakText("很遗憾，摊牌失利");
         }
 
         updateUI();
