@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Triton Poker Pro - M5 iPad 定制版 V22</title>
+    <title>Triton Poker Pro - M5 iPad 定制版 V23</title>
     <style>
         :root { 
             --table-bg: radial-gradient(ellipse at center, #1b2838 0%, #0d131a 100%);
@@ -13,7 +13,7 @@
         }
         body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: #05070a; color: var(--text-main); margin: 0; overflow: hidden; display: flex; flex-direction: column; height: 100vh; user-select: none; -webkit-font-smoothing: antialiased;}
 
-        /* 系统菜单栏：极致靠边，避免与玩家冲突 */
+        /* 系统菜单栏 */
         #hud-btn { position: absolute; top: 15px; left: 15px; background: rgba(13, 19, 26, 0.8); border: 1px solid var(--gold); color: var(--gold); padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; z-index: 500; font-size: 15px;}
         #menu-btn { position: absolute; top: 15px; right: 15px; background: rgba(231, 76, 60, 0.2); border: 1px solid var(--alert); color: var(--alert); padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; z-index: 500; font-size: 15px;}
 
@@ -32,14 +32,13 @@
         .start-btn { width: 100%; padding: 16px; background: var(--gold); color: #000; font-size: 20px; font-weight: 900; border: none; border-radius: 10px; cursor: pointer; margin-top: 15px; transition: 0.2s; box-shadow: 0 4px 15px rgba(212,175,55,0.3);}
         .start-btn:active { transform: scale(0.98); }
 
-        /* 牌桌系统：核心收紧逻辑！宽度大幅缩小，留出屏幕边缘轨道 */
+        /* 牌桌系统：彻底拉开空间，适配 4:3 */
         #game-screen { display: none; flex: 1; position: relative; }
         #table { 
             position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); 
-            width: 65vw; /* 极度收紧，避免贴边 */
-            height: 48vh; 
-            max-width: 850px; max-height: 500px; 
-            background: var(--table-bg); border-radius: 220px / 120px; 
+            width: 72vw; height: 55vh; 
+            max-width: 1000px; max-height: 650px; 
+            background: var(--table-bg); border-radius: 220px / 130px; 
             border: 14px solid var(--table-border); 
             box-shadow: inset 0 0 80px rgba(0,0,0,0.8), 0 30px 60px rgba(0,0,0,0.9); 
             display: flex; align-items: center; justify-content: center; flex-direction: column;
@@ -49,10 +48,11 @@
         #main-pot { color: var(--gold); font-size: 22px; font-weight: 900; background: rgba(0,0,0,0.7); padding: 6px 25px; border-radius: 20px; margin-bottom: 15px; border: 1px solid rgba(212, 175, 55, 0.4); text-shadow: 0 2px 4px #000; }
         #board-cards { display: flex; gap: 6px; justify-content: center; align-items: center; min-height: 90px;}
 
-        /* 座位基础结构：彻底理清层级关系 */
+        /* 座位基础结构：加宽防止折叠 */
         .seat { 
             position: absolute; display: flex; flex-direction: column; align-items: center; 
-            width: 120px; transition: all 0.3s;
+            width: 140px; /* 修复03：加宽容器，给卡牌足够的横向空间 */
+            transition: all 0.3s;
         }
         
         .seat.in-hand .player-panel { border: 2px solid var(--call); box-shadow: 0 0 15px rgba(52, 152, 219, 0.5); }
@@ -60,53 +60,59 @@
         .seat.acting { z-index: 50; }
         .seat.folded { opacity: 0.35; filter: grayscale(100%) brightness(0.7); z-index: 1; pointer-events: none;}
         
-        /* 座位定位：贴近牌桌外围，远离物理屏幕边缘，上下拉开距离防止遮挡公共牌 */
-        #seat-0 { bottom: -24%; left: 50%; transform: translateX(-50%); z-index: 30;} 
-        #seat-3 { top: -24%; left: 50%; transform: translateX(-50%); z-index: 25;} 
-        #seat-1 { bottom: 2%; left: -18%; }
-        #seat-2 { top: 18%; left: -18%; } /* 顶部下拉避开战绩按钮 */
-        #seat-4 { top: 18%; right: -18%; }
-        #seat-5 { bottom: 2%; right: -18%; }
+        /* 座位定位：大幅拉开上下座位的垂直间距 */
+        #seat-0 { bottom: -12%; left: 50%; transform: translateX(-50%); z-index: 30;} 
+        #seat-3 { top: -12%; left: 50%; transform: translateX(-50%); z-index: 25;} 
+        #seat-1 { bottom: 10%; left: -10%; }
+        #seat-2 { top: 10%; left: -10%; } 
+        #seat-4 { top: 10%; right: -10%; }
+        #seat-5 { bottom: 10%; right: -10%; }
 
-        /* 零遮挡核心 1：手牌区域锚定底部，决不乱飞 */
+        /* 零遮挡核心 1：强制卡牌不折叠！ */
         .hole-cards { 
-            display: flex; gap: 3px; 
-            margin-bottom: -15px; /* 让底牌完美下沉到面板后方 */
+            display: flex; gap: 4px; 
+            flex-wrap: nowrap !important; /* 修复03：绝对禁止折叠！ */
+            margin-bottom: -10px; 
             z-index: 4; justify-content: center; 
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: all 0.3s ease;
         }
         .hole-cards .card { 
             transform: scale(0.65); 
-            transform-origin: bottom center; /* 绝对核心：放大时底部锚定，只往两边撑，绝不往上飞！ */
+            transform-origin: bottom center; 
             margin: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.6);
         }
 
-        /* 零遮挡核心 2：结算摊牌平滑展开 */
+        /* 摊牌平滑展开，不碰头像 */
         #table.showdown-mode .seat:not(.folded) { z-index: 150 !important; }
         #table.showdown-mode .seat:not(.folded) .hole-cards { 
-            gap: 10px; /* 扇形展开不重叠 */
-            margin-bottom: -5px; /* 稍微上浮露出身位，但绝不碰公共牌 */
+            gap: 10px; 
+            margin-bottom: 2px; /* 摊牌时微微上浮，脱离头像框 */
             z-index: 250;
         }
         #table.showdown-mode .seat:not(.folded) .hole-cards .card { 
-            transform: scale(0.85); /* 原地放大 */
+            transform: scale(0.85); 
             box-shadow: 0 10px 25px rgba(0,0,0,0.9); 
         }
 
-        /* 零遮挡核心 3：动作气泡绝不碰扑克牌 */
+        /* 修复01 & 02：动作/结算气泡侧边悬浮逻辑 */
         .action-tag { 
             background: #2c3e50; color: #fff; font-size: 15px; padding: 6px 14px; border-radius: 8px; font-weight: 900; 
             position: absolute; 
-            top: -75px; /* 死死锁定在最高处安全区 */
-            left: 50%; transform: translateX(-50%) scale(0.9); 
+            top: 20px; /* 高度与扑克牌齐平 */
+            right: -75px; /* 挂在界面的右侧外围，坚决不碰牌面 */
             opacity: 0; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 300; white-space: nowrap; 
             box-shadow: 0 6px 15px rgba(0,0,0,0.8); border: 2px solid #fff; pointer-events: none;
         }
-        .action-tag.show { opacity: 1; transform: translateX(-50%) scale(1); }
+        .action-tag.show { opacity: 1; transform: scale(1); }
         
         #table.showdown-mode .action-tag {
-            top: -105px !important; /* 摊牌牌面变大时，气泡随之飙升，绝对防重叠！ */
-            transform: translateX(-50%) scale(1.1) !important;
+            transform: scale(1.1) !important; /* 结算时放大气泡，但不改变位置 */
+        }
+
+        /* 右侧玩家（库巴、萨姆斯等）的气泡放在左边，防止顶出屏幕 */
+        #seat-4 .action-tag, #seat-5 .action-tag {
+            right: auto;
+            left: -75px; 
         }
 
         .tag-fold { background: var(--alert); border-color: #c0392b; }
@@ -118,9 +124,9 @@
         .player-panel { 
             width: 100%; background: rgba(10, 14, 20, 0.95); 
             border: 2px solid #334; border-radius: 12px; 
-            padding: 28px 8px 8px 8px; /* 顶部留白给头像 */
+            padding: 28px 8px 8px 8px; 
             text-align: center; box-sizing: border-box; 
-            position: relative; z-index: 10; /* Z轴置顶，死死压住手牌底部边界 */
+            position: relative; z-index: 10; 
             box-shadow: 0 6px 20px rgba(0,0,0,0.8);
         }
         
@@ -253,7 +259,7 @@
 
     <div id="setup-screen">
         <div class="setup-box">
-            <h1>TRITON PRO <span style="font-size:14px; color:var(--alert)">V22 定制版</span></h1>
+            <h1>TRITON PRO <span style="font-size:14px; color:var(--alert)">V23 定制版</span></h1>
             <div class="form-row">
                 <label>玩家昵称</label>
                 <input type="text" id="cfg-name" value="玩家 1">
@@ -317,17 +323,17 @@
     let sessionBuyin = 0;
 
     window.onload = function() {
-        if(localStorage.getItem('TritonSaveV22')) document.getElementById('btn-load-save').style.display = 'block';
+        if(localStorage.getItem('TritonSaveV23')) document.getElementById('btn-load-save').style.display = 'block';
     };
 
     function saveGameState() {
         let saveData = { cfg, players, tracker, sessionBuyin, pot, street, dealerIdx, board };
-        localStorage.setItem('TritonSaveV22', JSON.stringify(saveData));
+        localStorage.setItem('TritonSaveV23', JSON.stringify(saveData));
         document.getElementById('btn-load-save').style.display = 'block';
     }
 
     function loadGameFromSave() {
-        let saved = localStorage.getItem('TritonSaveV22');
+        let saved = localStorage.getItem('TritonSaveV23');
         if (saved) {
             let data = JSON.parse(saved);
             cfg = data.cfg; players = data.players; tracker = data.tracker; 
@@ -525,14 +531,14 @@
         if (players[0].stack <= 0) {
             document.getElementById('go-title').innerText = "💀 筹码耗尽";
             document.getElementById('game-over-modal').style.display = 'flex';
-            localStorage.removeItem('TritonSaveV22'); 
+            localStorage.removeItem('TritonSaveV23'); 
             return;
         }
         let aiAlive = players.filter(p => p.activeInGame && p.isAI && p.stack > 0).length;
         if (aiAlive === 0) {
             document.getElementById('go-title').innerText = "🏆 霸桌成功！";
             document.getElementById('game-over-modal').style.display = 'flex';
-            localStorage.removeItem('TritonSaveV22');
+            localStorage.removeItem('TritonSaveV23');
             return;
         }
 
