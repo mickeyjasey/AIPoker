@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Triton Poker Pro - M5 iPad 定制版 V30 (Risk Management Edition)</title>
+    <title>Triton Poker Pro - M5 iPad 定制版 V31 (Arbitration Edition)</title>
     <style>
         :root { 
             --table-bg: radial-gradient(ellipse at center, #1b2838 0%, #0d131a 100%);
@@ -98,7 +98,6 @@
         .action-tag.show { opacity: 1; transform: scale(1); }
         
         #table.showdown-mode .action-tag { transform: scale(1.1) !important; }
-
         #seat-4 .action-tag, #seat-5 .action-tag { right: auto; left: -75px; }
 
         .tag-fold { background: var(--alert); border-color: #c0392b; }
@@ -241,7 +240,7 @@
 
     <div id="setup-screen">
         <div class="setup-box">
-            <h1>TRITON PRO <span style="font-size:14px; color:var(--alert)">V30 风险控制版</span></h1>
+            <h1>TRITON PRO <span style="font-size:14px; color:var(--alert)">V31 仲裁优化版</span></h1>
             <div class="form-row">
                 <label>玩家昵称</label>
                 <input type="text" id="cfg-name" value="玩家 1">
@@ -304,17 +303,17 @@
     let sessionBuyin = 0;
 
     window.onload = function() {
-        if(localStorage.getItem('TritonSaveV30')) document.getElementById('btn-load-save').style.display = 'block';
+        if(localStorage.getItem('TritonSaveV31')) document.getElementById('btn-load-save').style.display = 'block';
     };
 
     function saveGameState() {
         let saveData = { cfg, players, tracker, sessionBuyin, pot, street, dealerIdx, board };
-        localStorage.setItem('TritonSaveV30', JSON.stringify(saveData));
+        localStorage.setItem('TritonSaveV31', JSON.stringify(saveData));
         document.getElementById('btn-load-save').style.display = 'block';
     }
 
     function loadGameFromSave() {
-        let saved = localStorage.getItem('TritonSaveV30');
+        let saved = localStorage.getItem('TritonSaveV31');
         if (saved) {
             let data = JSON.parse(saved);
             cfg = data.cfg; players = data.players; tracker = data.tracker; 
@@ -508,14 +507,14 @@
         if (players[0].stack <= 0) {
             document.getElementById('go-title').innerText = "💀 筹码耗尽";
             document.getElementById('game-over-modal').style.display = 'flex';
-            localStorage.removeItem('TritonSaveV30'); 
+            localStorage.removeItem('TritonSaveV31'); 
             return;
         }
         let aiAlive = players.filter(p => p.activeInGame && p.isAI && p.stack > 0).length;
         if (aiAlive === 0) {
             document.getElementById('go-title').innerText = "🏆 霸桌成功！";
             document.getElementById('game-over-modal').style.display = 'flex';
-            localStorage.removeItem('TritonSaveV30');
+            localStorage.removeItem('TritonSaveV31');
             return;
         }
 
@@ -822,9 +821,17 @@
         if (deadMoney > 0 && pots.length > 0) pots[pots.length - 1].amount += deadMoney;
 
         let winRecords = {}; 
+        let isTie = false; // V31 新增平局仲裁判定
+        
         pots.forEach(subPot => {
             let maxS = Math.max(...subPot.eligible.map(p => p.handScore));
             let winners = subPot.eligible.filter(p => p.handScore === maxS);
+            
+            // 判定玩家是否卷入平分底池
+            if (winners.some(w => w.id === 0) && winners.length > 1) {
+                isTie = true;
+            }
+
             let split = Math.floor(subPot.amount / winners.length);
             let odd = subPot.amount % winners.length;
             
@@ -837,11 +844,12 @@
         let myWin = winRecords[0] || 0;
         let myNet = myWin - players[0].origInvest;
         
+        // V31 仲裁视觉播报优化：明确区分独立获胜与平分底池
         if (myNet > 0) {
-            showCenterResult(`+ $${myNet}`, "win", "摊牌获胜 (净利)");
-            speakText("你赢下了摊牌");
+            showCenterResult(`+ $${myNet}`, "win", isTie ? "平分底池 (净盈利)" : "摊牌获胜 (净利)");
+            speakText(isTie ? "平局分池，拿回盈利" : "你赢下了摊牌");
         } else if (myNet === 0) {
-            showCenterResult(`$0`, "info", "摊牌平分 (回本)");
+            showCenterResult(`$0`, "info", isTie ? "平分底池 (公共牌/踢脚相同)" : "摊牌平局");
             speakText("平分底池");
         } else {
             showCenterResult(`- $${Math.abs(myNet)}`, "lose", myWin > 0 ? "赢下边池但总体倒亏" : "摊牌失利");
@@ -923,10 +931,7 @@
         let act = 'fold';
         let callCost = highestBet - ai.bet;
         let livePot = pot + players.reduce((sum, p) => sum + (p.bet || 0), 0);
-        
-        // SPR (筹码底池比) - 用于底池控制与风险管理
         let spr = ai.stack / (livePot === 0 ? 1 : livePot);
-        // 筹码承诺比 - 判定需要投入多少身家
         let commitPct = callCost / (ai.stack + 0.1); 
 
         try {
@@ -946,9 +951,6 @@
                 currentTrap = 0;     
             }
 
-            // ==================
-            // 翻前 (Preflop) 逻辑
-            // ==================
             if (street === 0) {
                 let tier = getPreflopTier(ai.cards[0], ai.cards[1]);
                 let isFacedRaise = highestBet > cfg.bb;
@@ -986,15 +988,11 @@
                     else act = 'fold'; 
                 }
             } 
-            // ==================
-            // 翻后 (Postflop) 逻辑
-            // ==================
             else {
                 let eq = calcEquity(ai.cards, oppsCount, 2500); 
                 let potOdds = callCost > 0 ? callCost / (livePot + callCost) : 0;
                 
                 let isNuts = eq > 0.85; 
-                // 【修复】：收紧跟注站的剥削阈值至 0.65，避免用低胜率牌送命
                 let isValue = isStation ? (eq > 0.65) : (eq > 0.75); 
                 let isDraw = (street === 1 || street === 2) && (eq > 0.20 && eq < 0.40); 
                 
@@ -1019,28 +1017,21 @@
                 }
             }
 
-            // ==================
-            // 极端生存与抗方差逻辑 (防清台核心)
-            // ==================
             let hasAllinOpponent = players.some(p => p.activeInGame && p.allIn && p.id !== ai.id);
             if (hasAllinOpponent || commitPct > 0.4) {
                 if (street === 0) {
                     let tier = getPreflopTier(ai.cards[0], ai.cards[1]);
-                    // 如果面临巨额推空 (>40BB)，必须要求极品牌(Tier 1)才接盘
                     if (callCost > cfg.bb * 40) act = (tier === 1) ? 'call' : 'fold';
                     else act = (tier <= 2) ? 'call' : 'fold';
                 } else {
                     let eq = calcEquity(ai.cards, oppsCount, 3000);
-                    // 动态溢价系统：如果要投入一半身家，不仅要求底池赔率够，还要求绝对胜率必须足够高 (防止拿弱听牌死磕)
                     let premium = commitPct > 0.4 ? 1.3 : 1.1; 
                     if (eq > 0.85 && getActingPlayerCount() > 1) act = 'raise';
-                    // 附加抗方差条件：胜率必须大于45%，除非死钱(底池)已经大到离谱
                     else if (eq >= potOdds * premium && (eq > 0.45 || potOdds < 0.25)) act = 'call'; 
                     else act = 'fold';
                 }
             }
 
-            // 绝对防呆：免费牌绝对不弃
             if (act === 'fold' && callCost === 0) {
                 act = 'call';
             }
@@ -1070,7 +1061,6 @@
                             else sizePct = 0.33; 
                         }
                         
-                        // 【底池控制】：SPR极低时，如果没有绝对坚果，不再做重锤超池下注
                         if (spr < 2 && !isNuts) sizePct = Math.min(sizePct, 0.4);
 
                         target = highestBet + Math.floor(livePot * sizePct);
@@ -1080,7 +1070,6 @@
                     target = Math.round(target / sb) * sb; 
 
                     if (target < minT) target = minT;
-                    // 【修正】：跟注站剥削加注添加上限防护，最高只增量1.2倍，且坚决不超池，避免AI强行自爆
                     if (isStation && target < maxT && street > 0 && spr > 1) {
                         target = Math.min(Math.floor(target * 1.2), livePot + highestBet); 
                     }
@@ -1118,10 +1107,8 @@
             <div>加注率 (PFR): <b style="color:var(--gold)">${pfrStr}%</b></div>
             <div>激进指数 (AF): <b style="color:var(--gold)">${afStr}</b></div>
             <div style='background:rgba(212,175,55,0.1); padding:15px; border-radius:10px; border:1px dashed var(--gold); margin-top:20px; font-size:15px;'>
-                <b>💡 满血防清台版 (V30) 更新提示：</b><br>
-                • <b style='color:var(--raise)'>风险控制：</b>AI学会了管理 SPR (筹码底池比) 和抗方差机制。<br>
-                • <b style='color:var(--raise)'>生存底线：</b>巨额 All-in 将需要极高的溢价胜率才能接盘，拒绝拿命搏听牌。<br>
-                • <b style='color:var(--raise)'>底池控制：</b>即便为了剥削你，AI 也懂得在筹码变浅时控制底池，不再无脑超池送钱。<br>
+                <b>💡 仲裁优化版 (V31) 更新提示：</b><br>
+                • <b style='color:var(--raise)'>平局仲裁：</b>现在发生“公共牌平分”或“踢脚线抵消”时，系统会在结算界面明确宣告平局，杜绝误判。<br>
             </div>
         `;
         document.getElementById('hud-data').innerHTML = html;
