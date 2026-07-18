@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Triton Poker Pro - M5 iPad 定制版 V27 (Pro AI Edition)</title>
+    <title>Triton Poker Pro - M5 iPad 定制版 V28 (AI Aggression Edition)</title>
     <style>
         :root { 
             --table-bg: radial-gradient(ellipse at center, #1b2838 0%, #0d131a 100%);
@@ -166,6 +166,7 @@
         .res-sub { font-size: 18px; color: #e0e6ed; background: rgba(0,0,0,0.85); border: 1px solid #555; padding: 6px 20px; border-radius: 12px; display: inline-block; margin-top: 10px; font-weight: bold;}
         .res-win { color: #2ecc71; }
         .res-lose { color: #e74c3c; }
+        .res-info { color: #f1c40f; }
     </style>
 </head>
 <body>
@@ -242,7 +243,7 @@
 
     <div id="setup-screen">
         <div class="setup-box">
-            <h1>TRITON PRO <span style="font-size:14px; color:var(--alert)">V27 职业AI版</span></h1>
+            <h1>TRITON PRO <span style="font-size:14px; color:var(--alert)">V28 强攻击性版</span></h1>
             <div class="form-row">
                 <label>玩家昵称</label>
                 <input type="text" id="cfg-name" value="玩家 1">
@@ -279,12 +280,12 @@
     const RANKS = [{v:2, l:'2'},{v:3, l:'3'},{v:4, l:'4'},{v:5, l:'5'},{v:6, l:'6'},{v:7, l:'7'},{v:8, l:'8'},{v:9, l:'9'},{v:10, l:'10'},{v:11, l:'J'},{v:12, l:'Q'},{v:13, l:'K'},{v:14, l:'A'}];
     const HAND_NAMES = ["高牌", "一对", "两对", "三条", "顺子", "同花", "葫芦", "四条", "同花顺"];
 
-    // AI 配置文件已重写为纯职业分级
+    // 引入 range 参数，控制 AI 的起手牌跨度
     const AI_PERSONALITIES = [
-        { type: 'GTO Wizard', vpip: 0.22, pfr: 0.18, aggr: 0.70, bluff: 0.35, trap: 0.20 }, // 平衡打法，极难剥削
-        { type: 'LAG Crusher', vpip: 0.35, pfr: 0.28, aggr: 0.85, bluff: 0.55, trap: 0.10 }, // 职业松凶，无情施压
-        { type: 'Nit Pro', vpip: 0.14, pfr: 0.10, aggr: 0.60, bluff: 0.15, trap: 0.30 },     // 紧凶，不玩垃圾牌，中牌必拿价值
-        { type: 'Maniac', vpip: 0.50, pfr: 0.40, aggr: 0.95, bluff: 0.75, trap: 0.05 }       // 狂人，极其激进，考验玩家心脏
+        { type: 'GTO Wizard', vpip: 0.22, pfr: 0.18, aggr: 0.70, bluff: 0.35, trap: 0.20, range: 3 }, // 标准3级起手牌
+        { type: 'LAG Crusher', vpip: 0.38, pfr: 0.32, aggr: 0.85, bluff: 0.55, trap: 0.10, range: 4 }, // 玩到4级边缘牌
+        { type: 'Nit Pro', vpip: 0.14, pfr: 0.10, aggr: 0.60, bluff: 0.15, trap: 0.30, range: 2 },     // 只玩2级强牌
+        { type: 'Maniac', vpip: 0.65, pfr: 0.55, aggr: 0.95, bluff: 0.80, trap: 0.05, range: 5 }       // 什么垃圾牌都敢玩
     ];
 
     const NAME_POOL = [
@@ -306,17 +307,17 @@
     let sessionBuyin = 0;
 
     window.onload = function() {
-        if(localStorage.getItem('TritonSaveV27')) document.getElementById('btn-load-save').style.display = 'block';
+        if(localStorage.getItem('TritonSaveV28')) document.getElementById('btn-load-save').style.display = 'block';
     };
 
     function saveGameState() {
         let saveData = { cfg, players, tracker, sessionBuyin, pot, street, dealerIdx, board };
-        localStorage.setItem('TritonSaveV27', JSON.stringify(saveData));
+        localStorage.setItem('TritonSaveV28', JSON.stringify(saveData));
         document.getElementById('btn-load-save').style.display = 'block';
     }
 
     function loadGameFromSave() {
-        let saved = localStorage.getItem('TritonSaveV27');
+        let saved = localStorage.getItem('TritonSaveV28');
         if (saved) {
             let data = JSON.parse(saved);
             cfg = data.cfg; players = data.players; tracker = data.tracker; 
@@ -472,9 +473,9 @@
         players.push({ id: 0, seat: 0, name: cfg.name, avatar: '😎', stack: cfg.startChips, bet: 0, invested: 0, cards: [], folded: false, allIn: false, activeInGame: true, isAI: false });
         
         let roles = [
-            AI_PERSONALITIES[0], AI_PERSONALITIES[0], // 2个GTO平衡玩家
-            AI_PERSONALITIES[1], AI_PERSONALITIES[2], // 1个松凶，1个紧凶
-            AI_PERSONALITIES[3]                       // 1个狂人
+            AI_PERSONALITIES[0], AI_PERSONALITIES[1], // 1个GTO，1个松凶
+            AI_PERSONALITIES[2], AI_PERSONALITIES[3], // 1个紧凶，1个疯子
+            AI_PERSONALITIES[Math.floor(Math.random() * AI_PERSONALITIES.length)]
         ];
         roles.sort(() => Math.random() - 0.5); 
         
@@ -510,14 +511,14 @@
         if (players[0].stack <= 0) {
             document.getElementById('go-title').innerText = "💀 筹码耗尽";
             document.getElementById('game-over-modal').style.display = 'flex';
-            localStorage.removeItem('TritonSaveV27'); 
+            localStorage.removeItem('TritonSaveV28'); 
             return;
         }
         let aiAlive = players.filter(p => p.activeInGame && p.isAI && p.stack > 0).length;
         if (aiAlive === 0) {
             document.getElementById('go-title').innerText = "🏆 霸桌成功！";
             document.getElementById('game-over-modal').style.display = 'flex';
-            localStorage.removeItem('TritonSaveV27');
+            localStorage.removeItem('TritonSaveV28');
             return;
         }
 
@@ -738,20 +739,21 @@
         
         let myLoss = players[0].invested;
         
+        // 彻底修复 V27 结算是非黑即白（别人弃牌就算赢总池）的错误
         if (winner && winner.id === 0) {
-            let myNet = pot - myLoss;
-            let subtext = myNet > 0 ? `(净利润 +$${myNet})` : (myNet === 0 ? "(回本)" : `(倒亏 -$${Math.abs(myNet)})`);
-            showCenterResult(`+ $${pot}`, "win", subtext);
-            speakText("你赢下了底池");
-        } else {
-            if (players[0].folded && myLoss > 0) {
-                showCenterResult(`- $${myLoss}`, "lose", "弃牌止损");
-                speakText("对手收下底池");
-            } else if (players[0].folded && myLoss === 0) {
-                showCenterResult(`$0`, "info", "未入池");
+            let myNet = pot - myLoss; // 真实净利润
+            if (myNet > 0) {
+                showCenterResult(`+ $${myNet}`, "win", "对手弃牌 (净利)");
+                speakText("你赢下了底池");
             } else {
-                 showCenterResult(`- $${myLoss}`, "lose", "对手收下底池");
-                 speakText("对手收下底池");
+                showCenterResult(`$0`, "info", "(平局回本)");
+            }
+        } else {
+            if (myLoss > 0) {
+                showCenterResult(`- $${myLoss}`, "lose", players[0].folded ? "弃牌止损" : "对手收下底池");
+                speakText(players[0].folded ? "弃牌止损" : "对手收下底池");
+            } else {
+                showCenterResult(`$0`, "info", "未入池");
             }
         }
         
@@ -833,12 +835,15 @@
         let myWin = winRecords[0] || 0;
         let myNet = myWin - players[0].origInvest;
         
-        if (myWin > 0) {
-            let subtext = myNet > 0 ? `(净利润 +$${myNet})` : (myNet === 0 ? "(回本)" : `(倒亏 -$${Math.abs(myNet)})`);
-            showCenterResult(`+ $${myWin}`, "win", subtext);
+        // 彻底修复 V27 赢边池但倒亏还弹绿字的错误结算
+        if (myNet > 0) {
+            showCenterResult(`+ $${myNet}`, "win", "摊牌获胜 (净利)");
             speakText("你赢下了摊牌");
+        } else if (myNet === 0) {
+            showCenterResult(`$0`, "info", "摊牌平分 (回本)");
+            speakText("平分底池");
         } else {
-            showCenterResult(`- $${players[0].origInvest}`, "lose", "摊牌失利");
+            showCenterResult(`- $${Math.abs(myNet)}`, "lose", myWin > 0 ? "赢下边池但总体倒亏" : "摊牌失利");
             speakText("很遗憾，摊牌失利");
         }
 
@@ -847,37 +852,30 @@
         document.getElementById('next-hand-container').style.display = 'block'; 
     }
 
-    // 翻前起手牌强度分级 (取代弱智的翻前胜率模拟)
-    // Tier 1: 顶级牌 (AA, KK, QQ, AKs) - 必须 3-bet
-    // Tier 2: 强牌 (JJ, TT, AQs, AKo) - 正常加注
-    // Tier 3: 投机牌 (中小对子, 同花连牌, 大同花) - 便宜看牌或跟注
-    // Tier 4: 边缘牌 - 随机玩
-    // Tier 5: 垃圾牌 - 直接扔
     function getPreflopTier(c1, c2) {
         let v1 = Math.max(c1.v, c2.v), v2 = Math.min(c1.v, c2.v);
         let suited = c1.s === c2.s;
         
         if (v1 === v2) {
-            if (v1 >= 12) return 1; // QQ+
-            if (v1 >= 9) return 2;  // 99-JJ
-            return 3;               // 22-88 (适合投机三条)
+            if (v1 >= 12) return 1; 
+            if (v1 >= 9) return 2;  
+            return 3;               
         }
         if (v1 === 14) {
-            if (v2 >= 13) return suited ? 1 : 1; // AK
-            if (v2 >= 12) return suited ? 1 : 2; // AQ
-            if (v2 >= 10) return suited ? 2 : 3; // AJ, AT
-            if (suited) return 3;                // A9s-A2s (坚果同花抽牌)
+            if (v2 >= 13) return suited ? 1 : 1; 
+            if (v2 >= 12) return suited ? 1 : 2; 
+            if (v2 >= 10) return suited ? 2 : 3; 
+            if (suited) return 3;                
             return 5;
         }
-        if (v1 === 13 && v2 >= 11) return suited ? 2 : 3; // KQs, KQ, KJs
-        if (suited && v1 >= 10 && v2 >= 10) return 2;     // 皇家同花连牌
-        if (suited && v1 - v2 <= 2 && v1 >= 7) return 3;  // 78s, 9Ts 等同花连牌
-        if (v1 >= 10 && v2 >= 9) return 4;                // 边缘高牌
+        if (v1 === 13 && v2 >= 11) return suited ? 2 : 3; 
+        if (suited && v1 >= 10 && v2 >= 10) return 2;     
+        if (suited && v1 - v2 <= 2 && v1 >= 7) return 3;  
+        if (v1 >= 10 && v2 >= 9) return 4;                
         
-        return 5; // 垃圾牌
+        return 5; 
     }
 
-    // 利用 M5/4090 性能优势，翻后胜率模拟拔高到极高精度
     function calcEquity(aiCards, activeOpps, iters = 2500) {
         if (activeOpps <= 0) return 1.0;
         let knownCards = [...aiCards, ...board];
@@ -930,88 +928,71 @@
             let rf = Math.random();
             let act = 'fold';
 
-            // 针对高 VPIP 人类玩家的剥削（ Exploitative Logic ）
             let hVPIP = (tracker.hands >= 5) ? (tracker.vpip/tracker.hands) : 0.5;
             let isHumanIn = !players[0].folded && players[0].activeInGame;
             
             let currentBluff = prof.bluff;
             let currentTrap = prof.trap;
 
-            if (isHumanIn && hVPIP > 0.6) {
-                // 如果发现玩家极度松（VPIP > 60%），AI 拒绝纯诈唬，并且不屑于慢打，拿到好牌直接重注索取价值
-                currentBluff *= 0.3;
-                currentTrap = 0;
+            // 【剥削降维打击逻辑】针对高VPIP跟注站
+            let isStation = (isHumanIn && hVPIP > 0.65);
+            if (isStation) {
+                currentBluff *= 0.5; // 空气诈唬减半
+                currentTrap = 0;     // 坚决不慢打，拿到牌就抽你的水
             }
 
-            // ==========================================
-            // 翻前逻辑：使用手牌强度分级，取代弱智胜率模拟
-            // ==========================================
             if (street === 0) {
                 let tier = getPreflopTier(ai.cards[0], ai.cards[1]);
                 let is3BetPot = highestBet > cfg.bb * 1.5;
 
-                if (tier === 1) { 
-                    // Tier 1 拿到好牌必须强力保护加注
-                    act = (rf < currentTrap && !is3BetPot) ? 'call' : 'raise'; 
-                } 
-                else if (tier === 2) { 
-                    // Tier 2 遇到 3-Bet 会衡量，没人加注就自己加
-                    if (is3BetPot) act = callCost > cfg.bb * 8 ? 'fold' : 'call';
-                    else act = 'raise';
-                } 
-                else if (tier === 3) {
-                    // Tier 3 适合投机，没人疯狂加注就看牌
-                    if (is3BetPot) act = 'fold';
-                    else act = callCost <= cfg.bb * 2.5 ? 'call' : 'fold';
+                // 核心：如果玩家太松，AI 扩大翻前的索取范围，原本的垃圾牌现在也会加注隔离你
+                if (isStation) {
+                    tier = Math.max(1, tier - 1); 
                 }
-                else if (tier === 4) {
-                    if (callCost === 0) act = 'call';
-                    else act = (rf < currentBluff * 0.2 && !is3BetPot) ? 'raise' : 'fold'; // 偶尔用垃圾牌偷鸡
-                }
-                else {
-                    if (callCost === 0) act = 'call';
-                    else act = 'fold';
-                }
-            } 
-            // ==========================================
-            // 翻后逻辑：两极化操作 (坚果与听牌半诈唬)
-            // ==========================================
-            else {
-                let eq = calcEquity(ai.cards, oppsCount, 2500); // 性能怪兽，2500次迭代保证精准度
-                let potOdds = callCost > 0 ? callCost / (livePot + callCost) : 0;
-                
-                let isNuts = eq > 0.85; // 坚果牌 (绝对领先)
-                let isDraw = (street === 1 || street === 2) && (eq > 0.20 && eq < 0.35); // 类似同花顺子抽牌的半胜率
-                
-                if (callCost === 0) {
-                    if (isNuts) {
-                        act = (rf < currentTrap) ? 'call' : 'raise'; // 慢打 or 快打
-                    } else if (isDraw) {
-                        act = (rf < prof.aggr) ? 'raise' : 'call'; // 拿听牌主动开火施压 (Semi-Bluff)
-                    } else if (eq > 0.6) {
-                        act = (rf < prof.aggr) ? 'raise' : 'call'; // 顶对，打价值
-                    } else if (eq > 0.3) {
-                        act = 'call'; // 中对/底对，过牌控制底池
-                    } else {
-                        act = (rf < currentBluff) ? 'raise' : 'call'; // 纯诈唬过牌
+
+                let maxPlayableTier = prof.range;
+
+                if (tier <= maxPlayableTier) {
+                    if (tier === 1) { 
+                        act = (rf < currentTrap && !is3BetPot) ? 'call' : 'raise'; 
+                    } else if (tier === 2) { 
+                        if (is3BetPot) act = callCost > cfg.bb * 12 ? 'fold' : 'call';
+                        else act = (rf < prof.aggr) ? 'raise' : 'call';
+                    } else if (tier === 3) {
+                        if (is3BetPot) act = (rf < prof.vpip) ? 'call' : 'fold';
+                        else act = (rf < prof.pfr) ? 'raise' : 'call';
+                    } else { // 属于 AI 扩大范围的牌
+                        if (is3BetPot) act = 'fold';
+                        else act = (rf < prof.pfr * 0.6) ? 'raise' : 'call'; // 大概率跟注，小概率凶你
                     }
                 } else {
-                    if (isNuts) {
-                        act = (rf < currentTrap) ? 'call' : 'raise'; 
-                    } else if (eq > potOdds + 0.15) { 
-                        act = (rf < prof.aggr * 0.6) ? 'raise' : 'call'; 
-                    } else if (eq > potOdds) {
-                        act = 'call'; // 赔率合适，坚决跟注
-                    } else if (isDraw) {
-                        // 面对下注，如果拿的是听牌，有一定几率反推回去 (Check-Raise bluff)
-                        act = (rf < currentBluff * 0.5) ? 'raise' : 'fold';
-                    } else {
-                        act = 'fold'; // 没中牌，乖乖弃牌
-                    }
+                    if (callCost === 0) act = 'call';
+                    else act = (rf < currentBluff * 0.25 && !is3BetPot) ? 'raise' : 'fold'; 
+                }
+            } 
+            else {
+                let eq = calcEquity(ai.cards, oppsCount, 2500); 
+                let potOdds = callCost > 0 ? callCost / (livePot + callCost) : 0;
+                
+                let isNuts = eq > 0.85; 
+                // 核心：面对你的高 VPIP，原本被认为毫无价值的“中对(55%胜率)”现在也会被当作强牌来索取价值
+                let isValue = isStation ? (eq > 0.55) : (eq > 0.70); 
+                let isDraw = (street === 1 || street === 2) && (eq > 0.20 && eq < 0.40); 
+                
+                if (callCost === 0) {
+                    if (isNuts) act = (rf < currentTrap) ? 'call' : 'raise'; 
+                    else if (isValue) act = (rf < prof.aggr * 1.2) ? 'raise' : 'call'; // 疯狂索取薄价值
+                    else if (isDraw) act = (rf < prof.aggr) ? 'raise' : 'call'; 
+                    else act = (rf < currentBluff) ? 'raise' : 'call'; 
+                } else {
+                    if (isNuts) act = (rf < currentTrap) ? 'call' : 'raise'; 
+                    else if (isValue) act = (rf < prof.aggr) ? 'raise' : 'call'; 
+                    else if (eq >= potOdds * 0.85) act = 'call'; // 稍微放宽跟注要求
+                    else if (isDraw && rf < currentBluff * 0.7) act = 'raise'; // 大幅提高听牌反推频率
+                    else act = 'fold'; 
                 }
             }
 
-            // 面临全押的极值处理
             let hasAllinOpponent = players.some(p => p.activeInGame && p.allIn && p.id !== ai.id);
             if (hasAllinOpponent) {
                 if (street === 0) {
@@ -1031,23 +1012,17 @@
                 let maxT = Math.min((ai.bet || 0) + (ai.stack || 0), maxValidBet);
                 
                 if (minT > maxT) {
-                    if (maxT > highestBet) {
-                        executeAction(toActIdx, 'raise', maxT);
-                        return;
-                    } else { 
-                        executeAction(toActIdx, 'call'); 
-                        return; 
-                    }
+                    if (maxT > highestBet) { executeAction(toActIdx, 'raise', maxT); return; } 
+                    else { executeAction(toActIdx, 'call'); return; }
                 } else {
                     let target = 0;
                     if (street === 0) {
                         let limpers = players.filter(p => p.activeInGame && p.bet === cfg.bb).length;
-                        target = highestBet === cfg.bb ? (cfg.bb * 3 + limpers * cfg.bb) : highestBet * 2.5; // 职业翻前加注尺度
+                        target = highestBet === cfg.bb ? (cfg.bb * 3 + limpers * cfg.bb) : highestBet * 2.5; 
                     } else {
                         let sizePct = 0.5;
                         let isNuts = street > 0 && calcEquity(ai.cards, oppsCount, 500) > 0.85;
                         
-                        // 极化下注尺度：要么极重，要么探路
                         if (isNuts || rf < currentBluff * 0.4) sizePct = rf < 0.3 ? 1.2 : 0.75; 
                         else if (rf < 0.5) sizePct = 0.50;
                         else sizePct = 0.33; 
@@ -1059,6 +1034,12 @@
                     target = Math.round(target / sb) * sb; 
 
                     if (target < minT) target = minT;
+
+                    // 针对跟注站的剥削：既然知道你爱跟注，那我有价值的时候就下重注！
+                    if (isStation && target < maxT && street > 0) {
+                        target = Math.min(maxT, Math.floor(target * 1.3)); 
+                    }
+
                     if (target > maxT) target = maxT;
                     executeAction(toActIdx, 'raise', target);
                     return;
@@ -1092,9 +1073,9 @@
             <div>加注率 (PFR): <b style="color:var(--gold)">${pfrStr}%</b></div>
             <div>激进指数 (AF): <b style="color:var(--gold)">${afStr}</b></div>
             <div style='background:rgba(212,175,55,0.1); padding:15px; border-radius:10px; border:1px dashed var(--gold); margin-top:20px; font-size:15px;'>
-                <b>💡 职业AI版 (V27) 导师点评：</b><br>
-                • 提示 1: <b style='color:var(--raise)'>AI已搭载动态剥削系统</b>，如果你VPIP过高，AI将大幅削减诈唬，转而进行无情索取。<br>
-                • 提示 2: <b style='color:var(--raise)'>小心听牌加注</b>，现在的AI懂得拿顺子/同花抽牌向你全押施压。<br>
+                <b>💡 强攻击性版 (V28) 导师点评：</b><br>
+                • 修复了结算Bug，只显示你的【净利润/倒亏】。<br>
+                • <b style='color:var(--raise)'>警告：</b>AI 已学会利用你高 VPIP 的弱点进行薄价值下注，它们会拿平时不敢玩的底牌主动攻击你。<br>
             </div>
         `;
         document.getElementById('hud-data').innerHTML = html;
