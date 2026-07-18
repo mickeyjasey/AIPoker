@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Triton Poker Pro - M5 iPad 定制版 V24</title>
+    <title>Triton Poker Pro - M5 iPad 定制版 V25</title>
     <style>
         :root { 
             --table-bg: radial-gradient(ellipse at center, #1b2838 0%, #0d131a 100%);
@@ -259,7 +259,7 @@
 
     <div id="setup-screen">
         <div class="setup-box">
-            <h1>TRITON PRO <span style="font-size:14px; color:var(--alert)">V24 结算优化版</span></h1>
+            <h1>TRITON PRO <span style="font-size:14px; color:var(--alert)">V25 终极完整版</span></h1>
             <div class="form-row">
                 <label>玩家昵称</label>
                 <input type="text" id="cfg-name" value="玩家 1">
@@ -323,17 +323,17 @@
     let sessionBuyin = 0;
 
     window.onload = function() {
-        if(localStorage.getItem('TritonSaveV24')) document.getElementById('btn-load-save').style.display = 'block';
+        if(localStorage.getItem('TritonSaveV25')) document.getElementById('btn-load-save').style.display = 'block';
     };
 
     function saveGameState() {
         let saveData = { cfg, players, tracker, sessionBuyin, pot, street, dealerIdx, board };
-        localStorage.setItem('TritonSaveV24', JSON.stringify(saveData));
+        localStorage.setItem('TritonSaveV25', JSON.stringify(saveData));
         document.getElementById('btn-load-save').style.display = 'block';
     }
 
     function loadGameFromSave() {
-        let saved = localStorage.getItem('TritonSaveV24');
+        let saved = localStorage.getItem('TritonSaveV25');
         if (saved) {
             let data = JSON.parse(saved);
             cfg = data.cfg; players = data.players; tracker = data.tracker; 
@@ -531,14 +531,14 @@
         if (players[0].stack <= 0) {
             document.getElementById('go-title').innerText = "💀 筹码耗尽";
             document.getElementById('game-over-modal').style.display = 'flex';
-            localStorage.removeItem('TritonSaveV24'); 
+            localStorage.removeItem('TritonSaveV25'); 
             return;
         }
         let aiAlive = players.filter(p => p.activeInGame && p.isAI && p.stack > 0).length;
         if (aiAlive === 0) {
             document.getElementById('go-title').innerText = "🏆 霸桌成功！";
             document.getElementById('game-over-modal').style.display = 'flex';
-            localStorage.removeItem('TritonSaveV24');
+            localStorage.removeItem('TritonSaveV25');
             return;
         }
 
@@ -751,7 +751,6 @@
         updateUI(); triggerNextTurn();
     }
 
-    // 核心修复：别人全弃牌时的底池收割爽感
     function sweepPotsAndEnd() {
         players.forEach(p => { pot += (p.bet || 0); p.bet = 0; });
         let winner = players.find(p => p.activeInGame && !p.folded);
@@ -762,7 +761,6 @@
         if (winner && winner.id === 0) {
             let myNet = pot - myLoss;
             let subtext = myNet > 0 ? `(净利润 +$${myNet})` : (myNet === 0 ? "(回本)" : `(倒亏 -$${Math.abs(myNet)})`);
-            // 直接爆出收割的总底池
             showCenterResult(`+ $${pot}`, "win", subtext);
             speakText("你赢下了底池");
         } else {
@@ -803,7 +801,6 @@
         return {score: score, name: HAND_NAMES[type]};
     }
 
-    // 核心修复：摊牌阶段的底池收割爽感
     function evaluateShowdown() {
         players.forEach(p => { pot += (p.bet || 0); p.bet = 0; p.origInvest = p.invested; }); 
         isHandActive = false; 
@@ -858,7 +855,6 @@
         
         if (myWin > 0) {
             let subtext = myNet > 0 ? `(净利润 +$${myNet})` : (myNet === 0 ? "(回本)" : `(倒亏 -$${Math.abs(myNet)})`);
-            // 直接爆出收割的总底池
             showCenterResult(`+ $${myWin}`, "win", subtext);
             speakText("你赢下了摊牌");
         } else {
@@ -870,7 +866,6 @@
         saveGameState(); 
         document.getElementById('next-hand-container').style.display = 'block'; 
     }
-
 
     function calcEquity(aiCards, activeOpps, iters = 1200) {
         if (activeOpps <= 0) return 1.0;
@@ -988,13 +983,20 @@
                 else act = 'fold';
             }
 
+            // V25 修复逻辑：严格约束加注目标的变量传递，防止异常熔断跳过玩家
             if (act === 'raise') {
                 let minT = highestBet + minRaiseInc;
                 let maxValidBet = Math.max(...players.map(p => (p.id !== ai.id && p.activeInGame && !p.folded) ? (p.bet || 0) + (p.stack || 0) : 0));
                 let maxT = Math.min((ai.bet || 0) + (ai.stack || 0), maxValidBet);
                 
                 if (minT > maxT) {
-                    if (maxT > highestBet) target = maxT; else { executeAction(toActIdx, 'call'); return; }
+                    if (maxT > highestBet) {
+                        executeAction(toActIdx, 'raise', maxT);
+                        return;
+                    } else { 
+                        executeAction(toActIdx, 'call'); 
+                        return; 
+                    }
                 } else {
                     let target = 0;
                     if (street === 0) {
