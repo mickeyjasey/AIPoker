@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Triton Poker Pro - M5 iPad 定制版 V25</title>
+    <title>Triton Poker Pro - M5 iPad 定制版 V26</title>
     <style>
         :root { 
             --table-bg: radial-gradient(ellipse at center, #1b2838 0%, #0d131a 100%);
@@ -175,7 +175,7 @@
 
         #next-hand-container { position: absolute; bottom: 22%; left: 50%; transform: translateX(-50%); z-index: 400; display: none; width: 100%; text-align: center;}
 
-        /* 结算大字报：添加净盈亏副标题的视觉支持 */
+        /* 结算大字报 */
         #result-overlay { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; z-index: 200; opacity: 0; transition: opacity 0.4s; }
         #result-overlay.show { opacity: 1; }
         .res-amt { font-size: 60px; font-weight: 900; text-shadow: 0 6px 30px rgba(0,0,0,0.9); white-space: nowrap;}
@@ -259,7 +259,7 @@
 
     <div id="setup-screen">
         <div class="setup-box">
-            <h1>TRITON PRO <span style="font-size:14px; color:var(--alert)">V25 终极完整版</span></h1>
+            <h1>TRITON PRO <span style="font-size:14px; color:var(--alert)">V26 纯净无Bug版</span></h1>
             <div class="form-row">
                 <label>玩家昵称</label>
                 <input type="text" id="cfg-name" value="玩家 1">
@@ -323,17 +323,17 @@
     let sessionBuyin = 0;
 
     window.onload = function() {
-        if(localStorage.getItem('TritonSaveV25')) document.getElementById('btn-load-save').style.display = 'block';
+        if(localStorage.getItem('TritonSaveV26')) document.getElementById('btn-load-save').style.display = 'block';
     };
 
     function saveGameState() {
         let saveData = { cfg, players, tracker, sessionBuyin, pot, street, dealerIdx, board };
-        localStorage.setItem('TritonSaveV25', JSON.stringify(saveData));
+        localStorage.setItem('TritonSaveV26', JSON.stringify(saveData));
         document.getElementById('btn-load-save').style.display = 'block';
     }
 
     function loadGameFromSave() {
-        let saved = localStorage.getItem('TritonSaveV25');
+        let saved = localStorage.getItem('TritonSaveV26');
         if (saved) {
             let data = JSON.parse(saved);
             cfg = data.cfg; players = data.players; tracker = data.tracker; 
@@ -531,14 +531,14 @@
         if (players[0].stack <= 0) {
             document.getElementById('go-title').innerText = "💀 筹码耗尽";
             document.getElementById('game-over-modal').style.display = 'flex';
-            localStorage.removeItem('TritonSaveV25'); 
+            localStorage.removeItem('TritonSaveV26'); 
             return;
         }
         let aiAlive = players.filter(p => p.activeInGame && p.isAI && p.stack > 0).length;
         if (aiAlive === 0) {
             document.getElementById('go-title').innerText = "🏆 霸桌成功！";
             document.getElementById('game-over-modal').style.display = 'flex';
-            localStorage.removeItem('TritonSaveV25');
+            localStorage.removeItem('TritonSaveV26');
             return;
         }
 
@@ -720,6 +720,7 @@
         }
     }
 
+    // V26 修复：“幽灵牌”彻底清除补丁
     function advanceStreet() {
         clearAllTags(); 
         players.forEach(p => { pot += (p.bet || 0); p.bet = 0; });
@@ -732,11 +733,12 @@
         let unfoldedCount = getActivePlayerCount();
 
         if (actingCount <= 1 && unfoldedCount > 1) {
-            while (street < 4) {
+            while (street < 3) { // 核心修复：最高只发到 street 3（即第5张河牌），杜绝多发第6张牌
                 street++; deck.pop(); 
                 if (street === 1) board.push(deck.pop(), deck.pop(), deck.pop());
                 else board.push(deck.pop());
             }
+            street = 4; // 强制进入摊牌轮次
             updateUI();
             setTimeout(evaluateShowdown, 1200);
             return;
@@ -983,7 +985,6 @@
                 else act = 'fold';
             }
 
-            // V25 修复逻辑：严格约束加注目标的变量传递，防止异常熔断跳过玩家
             if (act === 'raise') {
                 let minT = highestBet + minRaiseInc;
                 let maxValidBet = Math.max(...players.map(p => (p.id !== ai.id && p.activeInGame && !p.folded) ? (p.bet || 0) + (p.stack || 0) : 0));
