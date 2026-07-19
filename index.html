@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Triton Poker Pro - M5 iPad 定制版 V32 (Range-Aware Calculation Edition)</title>
+    <title>Triton Poker Pro - M5 iPad 定制版 V33 (Anti-Station & Core Combat)</title>
     <style>
         :root { 
             --table-bg: radial-gradient(ellipse at center, #1b2838 0%, #0d131a 100%);
@@ -240,10 +240,10 @@
 
     <div id="setup-screen">
         <div class="setup-box">
-            <h1>TRITON PRO <span style="font-size:14px; color:var(--alert)">V32 范围加权解算版</span></h1>
+            <h1>TRITON PRO <span style="font-size:14px; color:var(--alert)">V33 终极重装版</span></h1>
             <div class="form-row">
                 <label>玩家昵称</label>
-                <input type="text" id="cfg-name" value="玩家 1">
+                <input type="text" id="cfg-name" value="Hero">
             </div>
             <div class="form-row">
                 <label>大盲注 (BB)</label>
@@ -277,17 +277,17 @@
     const RANKS = [{v:2, l:'2'},{v:3, l:'3'},{v:4, l:'4'},{v:5, l:'5'},{v:6, l:'6'},{v:7, l:'7'},{v:8, l:'8'},{v:9, l:'9'},{v:10, l:'10'},{v:11, l:'J'},{v:12, l:'Q'},{v:13, l:'K'},{v:14, l:'A'}];
     const HAND_NAMES = ["高牌", "一对", "两对", "三条", "顺子", "同花", "葫芦", "四条", "同花顺"];
 
+    // V33：移除无用模型，仅保留三大实战性格
     const AI_PERSONALITIES = [
-        { type: 'GTO Wizard', vpip: 0.22, pfr: 0.18, aggr: 0.70, bluff: 0.35, trap: 0.20, range: 3 }, 
-        { type: 'LAG Crusher', vpip: 0.38, pfr: 0.32, aggr: 0.85, bluff: 0.55, trap: 0.10, range: 4 }, 
-        { type: 'Nit Pro', vpip: 0.14, pfr: 0.10, aggr: 0.60, bluff: 0.15, trap: 0.30, range: 2 },     
-        { type: 'Maniac', vpip: 0.65, pfr: 0.55, aggr: 0.95, bluff: 0.80, trap: 0.05, range: 5 }       
+        { type: 'LAG Crusher', vpip: 0.38, pfr: 0.30, aggr: 0.85, bluff: 0.55, trap: 0.10, range: 4 }, // 松凶
+        { type: 'Nit Pro',     vpip: 0.18, pfr: 0.14, aggr: 0.70, bluff: 0.20, trap: 0.25, range: 2 }, // 紧凶
+        { type: 'Calling Station', vpip: 0.55, pfr: 0.10, aggr: 0.30, bluff: 0.15, trap: 0.05, range: 5 } // 跟注站
     ];
 
     const NAME_POOL = [
-        { name: 'GTO机器', avatar: '🤖' }, { name: '松凶狂魔', avatar: '🔥' },
-        { name: '紧手老头', avatar: '👴' }, { name: '高注额大神', avatar: '🦈' },
-        { name: '数学天才', avatar: '📐' }, { name: '诈唬之王', avatar: '🎭' }
+        { name: '松凶鲨鱼', avatar: '🦈' }, { name: '松凶狂魔', avatar: '🔥' },
+        { name: '紧手老头', avatar: '👴' }, { name: '岩石玩家', avatar: '🪨' },
+        { name: '娱乐玩家', avatar: '🐟' }, { name: '提款机', avatar: '🏧' }
     ];
 
     let cfg = { bb: 10, startChips: 1000, numOpponents: 5, anteRatio: 0 };
@@ -303,17 +303,17 @@
     let sessionBuyin = 0;
 
     window.onload = function() {
-        if(localStorage.getItem('TritonSaveV32')) document.getElementById('btn-load-save').style.display = 'block';
+        if(localStorage.getItem('TritonSaveV33')) document.getElementById('btn-load-save').style.display = 'block';
     };
 
     function saveGameState() {
         let saveData = { cfg, players, tracker, sessionBuyin, pot, street, dealerIdx, board };
-        localStorage.setItem('TritonSaveV32', JSON.stringify(saveData));
+        localStorage.setItem('TritonSaveV33', JSON.stringify(saveData));
         document.getElementById('btn-load-save').style.display = 'block';
     }
 
     function loadGameFromSave() {
-        let saved = localStorage.getItem('TritonSaveV32');
+        let saved = localStorage.getItem('TritonSaveV33');
         if (saved) {
             let data = JSON.parse(saved);
             cfg = data.cfg; players = data.players; tracker = data.tracker; 
@@ -468,12 +468,11 @@
         players = [];
         players.push({ id: 0, seat: 0, name: cfg.name, avatar: '😎', stack: cfg.startChips, bet: 0, invested: 0, cards: [], folded: false, allIn: false, activeInGame: true, isAI: false, pfAggressor: false });
         
-        let roles = [
-            AI_PERSONALITIES[0], AI_PERSONALITIES[1], 
-            AI_PERSONALITIES[2], AI_PERSONALITIES[3], 
-            AI_PERSONALITIES[Math.floor(Math.random() * AI_PERSONALITIES.length)]
-        ];
-        roles.sort(() => Math.random() - 0.5); 
+        // 随机在 松凶、紧凶、跟注站 中分配
+        let roles = [];
+        for(let i=0; i<5; i++) {
+            roles.push(AI_PERSONALITIES[Math.floor(Math.random() * AI_PERSONALITIES.length)]);
+        }
         
         let availableNames = [...NAME_POOL];
         availableNames.sort(() => Math.random() - 0.5);
@@ -507,14 +506,14 @@
         if (players[0].stack <= 0) {
             document.getElementById('go-title').innerText = "💀 筹码耗尽";
             document.getElementById('game-over-modal').style.display = 'flex';
-            localStorage.removeItem('TritonSaveV32'); 
+            localStorage.removeItem('TritonSaveV33'); 
             return;
         }
         let aiAlive = players.filter(p => p.activeInGame && p.isAI && p.stack > 0).length;
         if (aiAlive === 0) {
             document.getElementById('go-title').innerText = "🏆 霸桌成功！";
             document.getElementById('game-over-modal').style.display = 'flex';
-            localStorage.removeItem('TritonSaveV32');
+            localStorage.removeItem('TritonSaveV33');
             return;
         }
 
@@ -883,7 +882,6 @@
         return 5; 
     }
 
-    // 【超级算法重构】：范围加权解算蒙特卡洛引擎（全面压榨M5/4090算力）
     function calcEquity(aiPlayer, iters = 3500) {
         let opponents = players.filter(p => p.activeInGame && !p.folded && p.id !== aiPlayer.id);
         if (opponents.length === 0) return 1.0;
@@ -898,7 +896,6 @@
         let deckLen = remDeck.length;
 
         for (let i = 0; i < iters; i++) {
-            // 每一次迭代都打乱牌堆，模拟最真实的洗牌分支
             for (let j = deckLen - 1; j > 0; j--) {
                 let jdx = Math.floor(Math.random() * (j + 1));
                 let tmp = remDeck[j]; remDeck[j] = remDeck[jdx]; remDeck[jdx] = tmp;
@@ -916,14 +913,11 @@
                 let c1 = remDeck[drawIdx--];
                 let c2 = remDeck[drawIdx--];
                 
-                // 解放算力核心：范围加权过滤 (Range-Aware Filtering)
-                // 读取该对手的位置及流派对应的VPIP。对人类玩家，读取追踪面板的实时动态 VPIP
                 let oppVpip = opp.isAI ? opp.profile.vpip : ((tracker.hands >= 5) ? (tracker.vpip / tracker.hands) : 0.8);
                 let tier = getPreflopTier(c1, c2);
                 
-                // 算法分支：如果模拟抽出的牌不属于此对手应该持有的合理期望范围，则进行重新采样洗牌，使其贴近真实牌手分布
                 if (oppVpip < 0.25 && tier > 3 && drawIdx > 1) {
-                    drawIdx += 2; // 放回
+                    drawIdx += 2; 
                     let r1 = Math.floor(Math.random() * (drawIdx + 1));
                     let t1 = remDeck[r1]; remDeck[r1] = remDeck[drawIdx]; remDeck[drawIdx] = t1;
                     c1 = remDeck[drawIdx--];
@@ -959,16 +953,24 @@
 
             let hVPIP = (tracker.hands >= 5) ? (tracker.vpip/tracker.hands) : 0.5;
             let isHumanIn = !players[0].folded && players[0].activeInGame;
-            let isStation = (isHumanIn && hVPIP > 0.65);
+            // 超过 50% 就算你松弱了，准备受罚
+            let isStation = (isHumanIn && hVPIP > 0.50); 
             
             let currentBluff = prof.bluff;
             let currentTrap = prof.trap;
 
             if (isStation) {
-                currentBluff *= 0.5; 
+                currentBluff *= 0.6; 
                 currentTrap = 0;     
             }
 
+            // 【V33 绝地求生赔率 (Crying Call) 机制】
+            // 哪怕有 All-in，只要要你补的钱极少 (赔率 < 8%) 且你不是 0 胜率，闭着眼睛跟注。
+            let potOdds = callCost > 0 ? callCost / (livePot + callCost) : 0;
+            
+            // ==================
+            // 翻前 (Preflop) 逻辑
+            // ==================
             if (street === 0) {
                 let tier = getPreflopTier(ai.cards[0], ai.cards[1]);
                 let isFacedRaise = highestBet > cfg.bb;
@@ -997,7 +999,6 @@
                     if (tier === 1) act = (rf < currentTrap) ? 'call' : 'raise'; 
                     else if (tier === 2) act = (rf < 0.5) ? 'raise' : 'call'; 
                     else if (tier === 3) act = (rf < 0.15 * prof.aggr) ? 'raise' : 'call'; 
-                    else if (tier === 4 && prof.type === 'Maniac') act = (rf < 0.2) ? 'raise' : 'fold'; 
                     else act = 'fold';
                 } else {
                     if (tier === 1) act = 'raise'; 
@@ -1006,10 +1007,11 @@
                     else act = 'fold'; 
                 }
             } 
+            // ==================
+            // 翻后 (Postflop) 逻辑
+            // ==================
             else {
-                let eq = calcEquity(ai, 3500); // 算力引擎调用：3500次加权离散概率解算
-                let potOdds = callCost > 0 ? callCost / (livePot + callCost) : 0;
-                
+                let eq = calcEquity(ai, 3500); 
                 let isNuts = eq > 0.85; 
                 let isValue = isStation ? (eq > 0.65) : (eq > 0.75); 
                 let isDraw = (street === 1 || street === 2) && (eq > 0.20 && eq < 0.40); 
@@ -1022,31 +1024,39 @@
                         else act = (rf < cbetFreq) ? 'raise' : 'call'; 
                     } else {
                         if (isNuts) act = (rf < currentTrap) ? 'call' : 'raise'; 
-                        else if (isValue) act = (rf < prof.aggr * 1.2) ? 'raise' : 'call'; 
+                        else if (isValue) act = (rf < prof.aggr * 1.3) ? 'raise' : 'call'; // 加大主动价值下注概率
                         else if (isDraw) act = (rf < prof.aggr) ? 'raise' : 'call'; 
                         else act = (rf < currentBluff * 0.5) ? 'raise' : 'call'; 
                     }
                 } else {
-                    if (isNuts) act = (rf < currentTrap) ? 'call' : 'raise'; 
+                    if (callCost > 0 && potOdds <= 0.08 && eq > 0.02) {
+                        act = 'call'; // 死命接盘小额底池
+                    }
+                    else if (isNuts) act = (rf < currentTrap) ? 'call' : 'raise'; 
                     else if (isValue) act = (rf < prof.aggr) ? 'raise' : 'call'; 
-                    else if (eq >= potOdds * 0.85) act = 'call'; 
-                    else if (isDraw && rf < currentBluff * 0.7) act = 'raise'; 
+                    else if (eq >= potOdds * 0.70) act = 'call'; // 放宽了抵抗阈值，防守更强
+                    else if (street === 1 && potOdds <= 0.25 && eq > 0.18 && rf < 0.5) act = 'call'; // 增加缠打 (Float) 机制抵抗你的小CBET
+                    else if (isDraw && rf < currentBluff * 0.8) act = 'raise'; // 大幅提高买牌凶狠度
                     else act = 'fold'; 
                 }
             }
 
             let hasAllinOpponent = players.some(p => p.activeInGame && p.allIn && p.id !== ai.id);
-            if (hasAllinOpponent || commitPct > 0.4) {
+            if ((hasAllinOpponent || commitPct > 0.4) && act !== 'call') {
                 if (street === 0) {
                     let tier = getPreflopTier(ai.cards[0], ai.cards[1]);
                     if (callCost > cfg.bb * 40) act = (tier === 1) ? 'call' : 'fold';
                     else act = (tier <= 2) ? 'call' : 'fold';
                 } else {
-                    let eq = calcEquity(ai, 4000); // 极端对抗，追加至 4000 次超高精度解算
-                    let premium = commitPct > 0.4 ? 1.3 : 1.1; 
-                    if (eq > 0.85 && getActingPlayerCount() > 1) act = 'raise';
-                    else if (eq >= potOdds * premium && (eq > 0.45 || potOdds < 0.25)) act = 'call'; 
-                    else act = 'fold';
+                    let eq = calcEquity(ai, 4000); 
+                    if (callCost > 0 && potOdds <= 0.08 && eq > 0.02) {
+                         act = 'call'; // 在All-in面对15块钱时依然生效
+                    } else {
+                        let premium = commitPct > 0.4 ? 1.2 : 1.05; 
+                        if (eq > 0.85 && getActingPlayerCount() > 1) act = 'raise';
+                        else if (eq >= potOdds * premium) act = 'call'; 
+                        else act = 'fold';
+                    }
                 }
             }
 
@@ -1066,7 +1076,10 @@
                     let target = 0;
                     if (street === 0) {
                         let limpers = players.filter(p => p.activeInGame && p.bet === cfg.bb).length;
-                        target = highestBet === cfg.bb ? (cfg.bb * 3 + limpers * cfg.bb) : highestBet * 2.5; 
+                        // 【隔离强化】：基础起步直接4.5BB，3Bet去到 3.5倍~4倍
+                        let baseRaise = isStation ? (cfg.bb * 4.5) : (cfg.bb * 3);
+                        let betMult = isStation ? 3.5 : 2.5;
+                        target = highestBet === cfg.bb ? (baseRaise + limpers * cfg.bb * 1.5) : highestBet * betMult; 
                     } else {
                         let sizePct = 0.5;
                         let isNuts = street > 0 && calcEquity(ai, 1000) > 0.85;
@@ -1125,9 +1138,10 @@
             <div>加注率 (PFR): <b style="color:var(--gold)">${pfrStr}%</b></div>
             <div>激进指数 (AF): <b style="color:var(--gold)">${afStr}</b></div>
             <div style='background:rgba(212,175,55,0.1); padding:15px; border-radius:10px; border:1px dashed var(--gold); margin-top:20px; font-size:15px;'>
-                <b>💡 范围加权解算版 (V32) 算力通告：</b><br>
-                • <b style='color:var(--raise)'>算力解放：</b>底层蒙特卡洛引擎重构，全面开启【范围过滤抽样】模式。<br>
-                • <b style='color:var(--raise)'>识破面目：</b>AI在模拟运算时会根据你的实时 VPIP 过滤概率样本，彻底掌握 Range vs Range 的高等算法，极难被低级剥削。<br>
+                <b>💡 终极重装版 (V33) 更新通告：</b><br>
+                • <b style='color:var(--raise)'>Crying Call：</b>修复不敢接盘Bug，死钱够多必然闭眼跟注。<br>
+                • <b style='color:var(--raise)'>翻前重锤：</b>面临高VPIP玩家，AI隔离起步价升至 4.5BB，3Bet 尺度拉大，用筹码挤压你。<br>
+                • <b style='color:var(--raise)'>缠打防守：</b>AI增加了 Float 机制，不会再被你的微弱C-Bet轻易吓跑，反而会在后手强行反击！<br>
             </div>
         `;
         document.getElementById('hud-data').innerHTML = html;
